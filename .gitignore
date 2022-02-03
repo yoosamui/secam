@@ -1,11 +1,17 @@
 # Prerequisites
 *.d
 
+# vim
+*.un~
+
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
+
+obj/
+*.cfg
 
 # Precompiled Headers
 *.gch
