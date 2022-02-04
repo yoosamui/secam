@@ -37,21 +37,27 @@ class ofApp : public ofBaseApp
 
   private:
     void check_connection();
+    void drawTimestamp();
 
     thread spawn()
     {
         return thread([this] { this->check_connection(); });
     }
 
-    thread m_thread;
+    thread m_checknetwork_thread;
 
     string m_camname;
+    string m_timestamp;
 
     Mat m_frame;
+
+    unsigned long m_frame_number = 0;
 
     bool m_server_mode = false;
     bool m_thread_processing = true;
     bool m_network = false;
+    bool m_processing = false;
+    bool m_lowframerate = false;
 
     int m_cam_width = 640;
     int m_cam_height = 360;

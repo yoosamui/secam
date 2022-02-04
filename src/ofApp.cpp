@@ -52,7 +52,7 @@ void ofApp::setup()
     ofLog::setAutoSpace(false);
 
     common::log("start check connection thread.");
-    m_thread = this->spawn();
+    m_checknetwork_thread = this->spawn();
 
     // set frame rate.
     ofSetFrameRate(FRAME_RATE);
@@ -103,21 +103,39 @@ void ofApp::setup()
     m_contour_finder.setMaxAreaRadius(100);
     m_contour_finder.setThreshold(10);
 
-    ofSetWindowTitle(m_camname);
-    // m_cam.connect();
+    ofSetWindowTitle("CAM-" + m_camname);
+
+    m_processing = true;
 }
 
 //--------------------------------------------------------------
 void ofApp::update()
 {
     if (!m_network || !m_cam.isOpened()) {
-        common::log("reconnect...");
+        common::log("connecting...");
         m_cam.connect();
 
         return;
     }
 
+    // frames counter. 5 frames time to stabilization.
+    if (m_frame_number++ < FRAME_RATE || !m_processing) return;
+
     m_cam >> m_frame;
+
+    if (!m_frame.empty()) {
+        m_boxes.clear();
+        //        common::bgrtorgb(m_frame);
+        //
+        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
+
+        if (m_lowframerate) {
+            common::log("LOW FRAME RATE " + to_string(FRAME_RATE), OF_LOG_WARNING);
+        }
+
+        m_timestamp = common::getTimestamp(m_config.settings.timezone);
+        this->drawTimestamp();
+    }
 }
 
 //--------------------------------------------------------------
@@ -128,6 +146,21 @@ void ofApp::draw()
     drawMat(m_frame, 0, 0);
 }
 
+//--------------------------------------------------------------
+void ofApp::drawTimestamp()
+{
+    if (m_frame.empty()) return;
+
+    int fontface = cv::FONT_HERSHEY_SIMPLEX;
+    double scale = 0.4;
+    int thickness = 1;
+    int x = m_frame.cols;
+    int y = 0;
+
+    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
+    cv::putText(m_frame, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
+                cv::Scalar(0, 0, 0), thickness, false);
+}
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) {}
 
