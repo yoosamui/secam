@@ -17,6 +17,7 @@ tags
 obj/
 *.cfg
 bin/secam
+*.log
 
 
 # Precompiled Headers

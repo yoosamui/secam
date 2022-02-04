@@ -8,11 +8,14 @@
 //--------------------------------------------------------------
 void ofApp::check_connection()
 {
+    string status;
     while (m_thread_processing) {
-        string status = common::exec(CHECK_CONNECTION_SCRIPT);
-        m_connected = status == "1" ? true : false;
+        auto path = string(CHECK_CONNECTION_SCRIPT);
 
-        if (!m_connected) common::log("disconnected", OF_LOG_WARNING);
+        status = common::exec(path.c_str());
+        m_network = status == "1" ? true : false;
+
+        if (!m_network) common::log("disconnected", OF_LOG_WARNING);
 
         this_thread::sleep_for(chrono::milliseconds(10000));
     }
@@ -99,13 +102,31 @@ void ofApp::setup()
     m_contour_finder.setMinAreaRadius(m_config.settings.minarearadius);
     m_contour_finder.setMaxAreaRadius(100);
     m_contour_finder.setThreshold(10);
+
+    ofSetWindowTitle(m_camname);
+    // m_cam.connect();
 }
 
 //--------------------------------------------------------------
-void ofApp::update() {}
+void ofApp::update()
+{
+    if (!m_network || !m_cam.isOpened()) {
+        common::log("reconnect...");
+        m_cam.connect();
+
+        return;
+    }
+
+    m_cam >> m_frame;
+}
 
 //--------------------------------------------------------------
-void ofApp::draw() {}
+void ofApp::draw()
+{
+    if (m_server_mode) return;
+
+    drawMat(m_frame, 0, 0);
+}
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) {}

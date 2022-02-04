@@ -1,8 +1,11 @@
 #!/bin/bash
 
-ip=$(head -n 1 "/home/$USER/scripts/ipaddress");
+path=$("pwd")
+hostfile=$path$"/data/scripts/ipaddress"
+
+ip=$(head -n 1 $hostfile);
 out=$(nc -zv -w10 ${ip} 55499 2>&1)
-#echo "---> $out"
+
 
 if [[ $out == *"succeeded!"* || $out == *"open"* ]]; then
     echo 1

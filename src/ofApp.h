@@ -1,5 +1,6 @@
 #pragma once
 
+#include "camera.hpp"
 #include "config.h"
 #include "ofMain.h"
 #include "ofxCv.h"
@@ -46,9 +47,11 @@ class ofApp : public ofBaseApp
 
     string m_camname;
 
+    Mat m_frame;
+
     bool m_server_mode = false;
     bool m_thread_processing = true;
-    bool m_connected = false;
+    bool m_network = false;
 
     int m_cam_width = 640;
     int m_cam_height = 360;
@@ -63,4 +66,6 @@ class ofApp : public ofBaseApp
     input_mode_t m_input_mode = input_mode_t::none;
 
     Config& m_config = m_config.getInstance();
+
+    Camera m_cam;
 };
