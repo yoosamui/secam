@@ -1,20 +1,85 @@
+#include <iomanip>
+#include <iostream>
+#include <opencv2/highgui.hpp>
+
+#include "constants.h"
 #include "ofApp.h"
 #include "ofAppNoWindow.h"
 #include "ofMain.h"
 
-int main(int argc, char* argv[])
+namespace bfs = boost::filesystem;
 
+static const string keys =
+    "{ help h   |       | print help message. }"
+    "{ camera c |       | load the camera config.cfg file and starts streaming. }"
+    "{ mode m   | 0     | start secam as client = 0 or server = 1  instance.}"
+    "{ width w  | 640   | stream width. }"
+    "{ height h | 360   | stream height. }";
+
+int main(int argc, char* argv[])
 {
-    if (argc < 2) {
-        cout << "enter parameters:  camname" << endl;
-        exit(1);
-    };
+    cv::CommandLineParser parser(argc, argv, keys);
+    parser.about("This is the secam client server system.");
+
+    if (parser.has("help")) {
+        parser.printMessage();
+        return 0;
+    }
+
+    if (!parser.check()) {
+        parser.printErrors();
+        return 1;
+    }
+
+    auto camera = parser.get<std::string>("camera");
+    auto width = parser.get<int>("width");
+    auto height = parser.get<int>("height");
+    auto mode = parser.get<int>("mode");
+
+    if (height < 100 || width < 100) {
+        cout << "invalid width, height values." << endl;
+        return 1;
+    }
+
+    if (camera.empty() || camera == "true") {
+        cout << "Enter the camera name. -c=mycamera" << endl;
+        return 1;
+    }
+
+    if (!bfs::exists("data/" + camera + ".cfg")) {
+        std::cout << "Can't find " + camera + " config file." << std::endl;
+        return 1;
+    }
+
+    auto logfile = "data/logs/" + camera + ".log";
+    if (bfs::exists(logfile)) {
+        bfs::remove(logfile);
+    }
+
+    if (!bfs::exists(CHECK_CONNECTION_SCRIPT)) {
+        cout << "Can't find " << string(CHECK_CONNECTION_SCRIPT) << " script file." << endl;
+        return 1;
+    }
 
     ofAppNoWindow window;
 
-    ofSetupOpenGL(640, 380, OF_WINDOW);
+    if (mode) {
+        ofSetupOpenGL(&window, 640, 380, OF_WINDOW);
+        cout << "start secam as server." << endl;
+    } else {
+        ofSetupOpenGL(width, height + 30, OF_WINDOW);
+    }
+
     auto app = std::make_shared<ofApp>();
 
-    //   app->setCamName(argv[1]);
+    // TODO create object/struct
+    app->setCamName(camera);
+    app->setServerMode(mode);
+    app->setCamWidth(width);
+    app->setCamHeight(height);
+
     ofRunApp(app);
+
+    cout << "secam end without exception." << endl;
+    return 0;
 }

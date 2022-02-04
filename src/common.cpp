@@ -2,6 +2,33 @@
 
 namespace common
 {
+    std::string camname;
+
+    void setCamName(const std::string& cam)
+    {
+        // TODO create an object
+
+        camname = cam;
+    }
+
+    // Log levels are (in order of priority):
+    //
+    // OF_LOG_VERBOSE
+    // OF_LOG_NOTICE
+    // OF_LOG_WARNING
+    // OF_LOG_ERROR
+    // OF_LOG_FATAL_ERROR
+    // OF_LOG_SILENT
+    //
+    void log(const string& message, ofLogLevel level)
+    {
+        ofLogToFile("data/logs/" + camname + ".log", true);
+        ofLog(level) << message << endl;
+
+        ofLogToConsole();
+        ofLog(level) << message << endl;
+    }
+
     string getTimestamp(const string& time_zone, const string& format_string)
     {
         time_t t = time(nullptr);

@@ -1,0 +1,24 @@
+
+
+--------------------------------------- 2022-02-04-10-45-31-591
+[notice ] start check connection thread.
+
+
+
+--------------------------------------- 2022-02-04-10-45-31-592
+[notice ] Configuration:
+uri = rtsp://admin:master!31416Pi@%s:55490/Streaming/channels/102
+timezone = Asia/Bangkok
+storage = /media/share/cameras/
+minarearadius = 1
+minrectwidth = 50
+minthreshold = 100
+mincontousize =  1
+detectionsmaxcount = 5
+
+
+
+
+--------------------------------------- 2022-02-04-10-45-31-592
+[notice ] create default mask
+

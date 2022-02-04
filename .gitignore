@@ -4,6 +4,10 @@
 # vim
 *.un~
 
+# ctags
+
+tags
+
 # Compiled Object files
 *.slo
 *.lo
@@ -12,6 +16,8 @@
 
 obj/
 *.cfg
+bin/secam
+
 
 # Precompiled Headers
 *.gch
