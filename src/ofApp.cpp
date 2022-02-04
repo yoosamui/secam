@@ -143,7 +143,21 @@ void ofApp::draw()
 {
     if (m_server_mode) return;
 
+    ofBackground(ofColor::black);
     drawMat(m_frame, 0, 0);
+
+    ofPushStyle();
+    if (m_lowframerate) {
+        string lfr = "L O W  F R A M E  R A T E";
+        ofDrawBitmapStringHighlight(lfr, 2, m_cam_height - 10);
+    }
+    ofPopStyle();
+
+    char buffer[128];
+    sprintf(buffer, "FPS/Frame: %2.2f/%.10lu ", ofGetFrameRate(), m_frame_number);
+
+    ofDrawBitmapStringHighlight(buffer, 1, m_cam_height + 15);
+    ofPopStyle();
 }
 
 //--------------------------------------------------------------

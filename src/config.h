@@ -6,13 +6,10 @@
 #include "ofxCv.h"
 #include "ofxXmlSettings.h"
 
-// https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
 class Config
 {
   private:
     Config() {}
-    // Config(Config const&);          // Don't Implement
-    // void operator=(Config const&);  // Don't implement
 
     ofxXmlSettings XML;
 
@@ -31,7 +28,7 @@ class Config
         int nighttime_hour = 19;
         int nighttime_second = 30;
 
-        string storage = "/home/yoo/Dropbox/survillance/";
+        string storage = "";
     };
 
   public:
@@ -40,8 +37,7 @@ class Config
 
     static Config& getInstance()
     {
-        static Config instance;  // Guaranteed to be destroyed.
-                                 // Instantiated on first use.
+        static Config instance;
         return instance;
     }
 

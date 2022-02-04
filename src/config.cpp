@@ -1,12 +1,14 @@
 #include "config.h"
 
+#include "common.h"
+
 #define CONFIG_MASKPOINTS "config:maskpoints"
 #define CONFIG_MASKPOINTS_POINT "maskpoints:point"
 
 bool Config::load(const string& filename)
 {
     if (!XML.loadFile(filename)) {
-        cout << "Configuration File not found. Set default settings." << endl;
+        common::log("Configuration File not found. Set default settings.", OF_LOG_WARNING);
         return false;
     }
 
