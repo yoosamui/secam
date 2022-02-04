@@ -80,6 +80,5 @@ int main(int argc, char* argv[])
 
     ofRunApp(app);
 
-    cout << "secam end without exception." << endl;
     return 0;
 }

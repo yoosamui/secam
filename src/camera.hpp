@@ -36,13 +36,8 @@ class Camera : public cv::VideoCapture
             std::size_t found = m_uri.find("%s");
             if (found != std::string::npos) {
                 sprintf(stream, m_uri.c_str(), m_host.c_str());
-
-                // ofSetWindowTitle(m_cam_name + " " + m_ip + " " +
-                //                 m_config.settings.timezone.c_str());
             } else {
-                //
                 sprintf(stream, "%s", m_uri.c_str());
-                // ofSetWindowTitle(stream);
             }
 
             common::log("open stream :" + string(stream));
@@ -53,9 +48,7 @@ class Camera : public cv::VideoCapture
                 this_thread::sleep_for(chrono::milliseconds(3000));
                 continue;
             } else {
-                //// m_cam.set(CAP_PROP_MODE, CAP_MODE_RGB);
                 set(CAP_PROP_MODE, 1);
-                //// m_reconnect = false;
                 break;
             }
         }
