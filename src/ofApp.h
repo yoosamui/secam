@@ -39,9 +39,9 @@ class ofApp : public ofBaseApp
   private:
     void check_connection();
     void drawTimestamp();
-    void create_mask();
-    void resetMask();
-    void polygonScaleUp();
+    //  void create_mask();
+    // void resetMask();
+    //   void polygonScaleUp();
 
     thread spawn()
     {
@@ -53,7 +53,7 @@ class ofApp : public ofBaseApp
     string m_camname;
     string m_timestamp;
 
-    Mat m_mask;
+    // Mat m_mask;
     Mat m_frame;
     Mat m_gray;
     Mat m_resized;
