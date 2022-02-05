@@ -39,6 +39,7 @@ class ofApp : public ofBaseApp
   private:
     void check_connection();
     void drawTimestamp();
+    void on_motion(Rect& r);
 
     thread spawn()
     {
@@ -46,6 +47,8 @@ class ofApp : public ofBaseApp
     }
 
     thread m_checknetwork_thread;
+
+    ofPolyline m_detected;
 
     string m_camname;
     string m_timestamp;

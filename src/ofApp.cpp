@@ -75,9 +75,9 @@ void ofApp::setup()
     common::log(ss.str());
 
     m_motion.init();
+    ofAddListener(m_motion.on_motion, this, &ofApp::on_motion);
 
     ofSetWindowTitle("CAM-" + m_camname);
-
     m_processing = true;
 }
 
@@ -115,8 +115,9 @@ void ofApp::update()
         this->drawTimestamp();
 
         // process motion
+        m_detected.clear();
         if (m_motion.update(m_frame)) {
-            //
+            common::log("motion detection");
         }
     }
 }
@@ -127,6 +128,7 @@ void ofApp::draw()
     if (m_server_mode || m_frame.empty()) return;
 
     ofBackground(ofColor::black);
+
     switch (m_view) {
         case 1: {
             drawMat(m_resized, 0, 0);
@@ -137,28 +139,56 @@ void ofApp::draw()
         case 2:
             drawMat(m_motion.getFrame(), 0, 0);
             m_motion.getMaskPolyLine().draw();
+
             break;
 
         case 3:
             drawMat(m_motion.getMaskImage(), 0, 0);
             m_motion.getMaskPolyLine().draw();
+
+            break;
+        case 4:
+            drawMat(m_motion.getOutput(), 0, 0);
+
             break;
         default:
-            return;
+            break;
     }
 
+    // draw detection polyline
     ofPushStyle();
+    ofNoFill();
+    ofSetLineWidth(1.5);
+    ofSetColor(yellowPrint);
+
+    m_detected.draw();
+
+    ofPopStyle();
+
     if (m_lowframerate) {
         string lfr = "L O W  F R A M E  R A T E";
         ofDrawBitmapStringHighlight(lfr, 2, m_cam_height - 10);
     }
-    ofPopStyle();
 
     char buffer[128];
     sprintf(buffer, "FPS/Frame: %2.2f/%.10lu ", ofGetFrameRate(), m_frame_number);
 
+    ofPushStyle();
     ofDrawBitmapStringHighlight(buffer, 1, m_cam_height + 15);
     ofPopStyle();
+}
+
+//--------------------------------------------------------------
+void ofApp::on_motion(Rect& r)
+{
+    m_detected = m_detected.fromRectangle(toOf(r));
+
+    if (m_view == 1) {
+        float sx = static_cast<float>(m_cam_width * 100 / m_motion.getWidth()) / 100;
+        float sy = static_cast<float>(m_cam_height * 100 / m_motion.getHeight()) / 100;
+
+        m_detected.scale(sx, sy);
+    }
 }
 
 //--------------------------------------------------------------
@@ -191,6 +221,11 @@ void ofApp::keyPressed(int key)
 
     if (key == '3') {
         m_view = 3;
+        return;
+    }
+
+    if (key == '4') {
+        m_view = 4;
         return;
     }
 

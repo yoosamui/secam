@@ -5,12 +5,23 @@
 #include "constants.h"
 #include "ofxOpenCv.h"
 
+#define MOG2
+
 class Motion
 {
     const int width = 320;
     const int height = 240;
 
   public:
+    ofEvent<Rect> on_motion;
+
+    Motion()
+    {
+        // update backgound after 5 frames
+        int frames = 1000 / FRAME_RATE * 5;
+        m_timex_background.setLimit(frames);
+    }
+
     void init()
     {
         m_maskPoints = m_config.mask_points;
@@ -52,6 +63,7 @@ class Motion
         convertColor(frame, m_gray, CV_RGB2GRAY);
         resize(m_gray, m_gray, Size(width, height));
 
+#ifndef MOG2
         if (!m_first_set) {
             m_gray.copyTo(m_first);
             m_first_set = true;
@@ -70,11 +82,28 @@ class Motion
         // copy and add mask
         m_threshold.copyTo(m_output, m_mask);
         m_gray.copyTo(m_mask_image, m_mask);
+#else
+        mog2->apply(m_gray, m_difference);
 
-        return true;
+        blur(m_difference, 20);
+        dilate(m_difference, 8);
+
+        threshold(m_difference, m_threshold, m_config.settings.minthreshold, 255, CV_THRESH_BINARY);
+
+        // copy and add mask
+        m_threshold.copyTo(m_output, m_mask);
+        m_gray.copyTo(m_mask_image, m_mask);
+#endif
+
+        return this->find();
     }
 
-    ofPolyline& getMaskPolyLine() { return m_polyline; }
+    ofPolyline& getMaskPolyLine()
+    {
+        //
+        return m_polyline;
+    }
+
     ofPolyline& getMaskPolyLineScaled()
     {
         if (!m_polyline_scaled.size()) this->polygonScaleUp();
@@ -82,16 +111,53 @@ class Motion
         return m_polyline_scaled;
     }
 
-    vector<Point>& getMaskPoints() { return m_maskPoints; }
-    vector<Point> getMaskPointsCopy() { return m_maskPoints; }
+    vector<Point>& getMaskPoints()
+    {
+        //
+        return m_maskPoints;
+    }
 
-    const Mat& getFrame() { return m_gray; }
-    const Mat& getMaskImage() { return m_mask_image; }
+    vector<Point> getMaskPointsCopy()
+    {
+        //
+        return m_maskPoints;
+    }
 
-    const int getWidth() { return width; }
-    const int getHeight() { return height; }
+    const Mat& getFrame()
+    {
+        //
+        return m_gray;
+    }
 
-    void updateMask() { this->create_mask(); }
+    const Mat& getMaskImage()
+    {
+        //
+        return m_mask_image;
+    }
+
+    const Mat& getOutput()
+    {
+        //
+        return m_output;
+    }
+
+    const int getWidth()
+    {
+        //
+        return width;
+    }
+
+    const int getHeight()
+    {
+        //
+        return height;
+    }
+
+    void updateMask()
+    {
+        //
+        this->create_mask();
+    }
 
     void resetMask()
     {
@@ -100,9 +166,13 @@ class Motion
         m_polyline_scaled.clear();
     }
 
-    void draw() {}
+    void draw()
+    {
+        //
+    }
 
   private:
+    Ptr<cv::BackgroundSubtractorMOG2> mog2 = createBackgroundSubtractorMOG2(100, 16, false);
     bool m_first_set = false;
 
     Mat m_frame_view;
@@ -123,6 +193,44 @@ class Motion
     vector<Point> m_maskPoints;
 
     ContourFinder m_contour_finder;
+
+    common::Timex m_timex_background;
+
+    bool find()
+    {
+        // start contour detection
+        m_contour_finder.findContours(m_output);
+
+        Rect m_max_rect = Rect(0, 0, 0, 0);
+        bool found = false;
+
+        int w = 0;
+        int h = 0;
+
+        // fast interation. filter the bigest rectangle
+        for (auto& r : m_contour_finder.getBoundingRects()) {
+            if ((r.width > w || r.height > h) && r.width > m_config.settings.minrectwidth &&
+                r.height > m_config.settings.minrectwidth) {
+                m_max_rect = Rect(r);
+
+                w = r.width;
+                h = r.height;
+
+                //        ofNotifyEvent(on_motion, m_max_rect, this);
+                found = true;
+            }
+        }
+
+        if (found) ofNotifyEvent(on_motion, m_max_rect, this);
+
+        if (m_timex_background.elapsed()) {
+            // if (!found)
+            m_gray.copyTo(m_first);
+            m_timex_background.set();
+        }
+
+        return found;
+    }
 
     void create_mask()
     {
