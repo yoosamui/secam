@@ -83,10 +83,10 @@ void ofApp::setup()
         }
     } else {
         // define default mask size
-        int h = m_cam_height - 4;
-        int w = m_cam_width - 4;
+        int h = m_proc_height - 4;
+        int w = m_proc_width - 4;
 
-        Point start_point(m_cam_width / 2 - w / 2, (m_cam_height / 2) - h / 2);
+        Point start_point(m_proc_width / 2 - w / 2, (m_proc_height / 2) - h / 2);
 
         m_polyline.lineTo(start_point.x, start_point.y);
         m_polyline.lineTo(start_point.x + w, start_point.y);
@@ -104,6 +104,9 @@ void ofApp::setup()
     m_contour_finder.setThreshold(10);
 
     ofSetWindowTitle("CAM-" + m_camname);
+
+    this->create_mask();
+    this->polygonScaleUp();
 
     m_processing = true;
 }
@@ -123,28 +126,52 @@ void ofApp::update()
 
     m_cam >> m_frame;
 
-    if (!m_frame.empty()) {
-        m_boxes.clear();
-        //        common::bgrtorgb(m_frame);
-        //
-        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
+    // TODO config setting
+    common::bgrtorgb(m_frame);
 
+    if (!m_frame.empty()) {
+        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
         if (m_lowframerate) {
-            common::log("LOW FRAME RATE " + to_string(FRAME_RATE), OF_LOG_WARNING);
+            common::log("LOW FRAME RATE " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+        }
+
+        m_boxes.clear();
+
+        if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
+            cv::resize(m_frame, m_resized, cv::Size(m_cam_width, m_cam_height));
+        } else {
+            m_frame.copyTo(m_resized);
         }
 
         m_timestamp = common::getTimestamp(m_config.settings.timezone);
         this->drawTimestamp();
+
+        convertColor(m_frame, m_gray, CV_RGB2GRAY);
+        cv::resize(m_gray, m_resized_proc, cv::Size(320, 240));
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::draw()
 {
-    if (m_server_mode) return;
+    if (m_server_mode || m_frame.empty()) return;
 
     ofBackground(ofColor::black);
-    drawMat(m_frame, 0, 0);
+    switch (m_view) {
+        case 1: {
+            drawMat(m_resized, 0, 0);
+            m_polyline_resized.draw();
+
+        } break;
+
+        case 2:
+            drawMat(m_resized_proc, 0, 0);
+            m_polyline.draw();
+            break;
+
+        default:
+            return;
+    }
 
     ofPushStyle();
     if (m_lowframerate) {
@@ -161,6 +188,45 @@ void ofApp::draw()
 }
 
 //--------------------------------------------------------------
+void ofApp::create_mask()
+{
+    if (m_maskPoints.size() == 0) {
+        m_maskPoints.push_back(cv::Point(2, 2));
+        m_maskPoints.push_back(cv::Point(m_proc_width - 2, 2));
+        m_maskPoints.push_back(cv::Point(m_proc_width - 2, m_proc_height - 2));
+        m_maskPoints.push_back(cv::Point(2, m_proc_height - 2));
+        m_maskPoints.push_back(cv::Point(2, 2));
+    }
+
+    CvMat* matrix = cvCreateMat(m_proc_height, m_proc_width, CV_8UC1);
+    m_mask = cvarrToMat(matrix);
+
+    for (int x = 0; x < m_mask.cols; x++) {
+        for (int y = 0; y < m_mask.rows; y++) m_mask.at<uchar>(cv::Point(x, y)) = 0;
+    }
+
+    fillPoly(m_mask, m_maskPoints, 255);
+}
+
+//--------------------------------------------------------------
+void ofApp::resetMask()
+{
+    m_maskPoints.clear();
+    m_polyline.clear();
+}
+
+//--------------------------------------------------------------
+void ofApp::polygonScaleUp()
+{
+    m_polyline_resized = m_polyline;
+
+    float scalex = static_cast<float>(m_cam_width * 100 / m_proc_width) / 100;
+    float scaley = static_cast<float>(m_cam_height * 100 / m_proc_height) / 100;
+
+    m_polyline_resized.scale(scalex, scaley);
+}
+
+//--------------------------------------------------------------
 void ofApp::drawTimestamp()
 {
     if (m_frame.empty()) return;
@@ -171,12 +237,36 @@ void ofApp::drawTimestamp()
     int x = m_frame.cols;
     int y = 0;
 
-    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
-    cv::putText(m_frame, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
+    cv::rectangle(m_resized, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
+    cv::putText(m_resized, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
                 cv::Scalar(0, 0, 0), thickness, false);
 }
 //--------------------------------------------------------------
-void ofApp::keyPressed(int key) {}
+void ofApp::keyPressed(int key)
+{
+    if (key == '1') {
+        m_view = 1;
+        return;
+    }
+
+    if (key == '2') {
+        m_view = 2;
+        return;
+    }
+
+    if (key == '3') {
+        m_view = 3;
+        return;
+    }
+
+    if (OF_KEY_F5 == key) {
+        if (m_view == 2) {
+            m_input_mode = input_mode_t::mask;
+            this->resetMask();
+        }
+        return;
+    }
+}
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key) {}
@@ -188,7 +278,46 @@ void ofApp::mouseMoved(int x, int y) {}
 void ofApp::mouseDragged(int x, int y, int button) {}
 
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button) {}
+void ofApp::mousePressed(int x, int y, int button)
+{
+    if (m_input_mode == input_mode_t::mask) {
+        if (button == 0) {
+            if (x < m_proc_width && y < m_proc_height) {
+                m_polyline.lineTo(x, y);
+            }
+
+        } else if (button == 2) {
+            if (m_polyline.size() > 1) {
+                // get the fisrt and last vertices
+                auto v1 = m_polyline.getVertices()[0];
+                auto v2 = m_polyline.getVertices().back();
+
+                // convert to cv::Point
+                Point p1 = Point(v1.x, v1.y);
+                Point p2 = Point(v2.x, v2.y);
+
+                if (p1 != p2) m_polyline.lineTo(p1.x, p1.y);
+
+                // copy the points;
+                m_maskPoints.clear();
+
+                for (const auto& v : m_polyline) {
+                    m_maskPoints.push_back(Point(v.x, v.y));
+                }
+
+                // create new mask;
+                // m_mask_image.release();
+                this->create_mask();
+                this->polygonScaleUp();
+
+                m_input_mode = input_mode_t::none;
+
+                m_config.mask_points = m_maskPoints;
+                m_config.save(m_camname + ".cfg");
+            }
+        }
+    }
+}
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button) {}

@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
     auto height = parser.get<int>("height");
     auto mode = parser.get<int>("mode");
 
-    if (height < 100 || width < 100) {
+    if (height < 50 || width < 50) {
         cout << "invalid width, height values." << endl;
         return 1;
     }
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     ofAppNoWindow window;
 
     if (mode) {
-        ofSetupOpenGL(&window, 640, 380, OF_WINDOW);
+        ofSetupOpenGL(&window, 10, 10, OF_WINDOW);
         cout << "start secam as server." << endl;
     } else {
         ofSetupOpenGL(width, height + 30, OF_WINDOW);
