@@ -74,39 +74,7 @@ void ofApp::setup()
 
     common::log(ss.str());
 
-    common::log("create default mask");
-    m_maskPoints = m_config.mask_points;
-
-    if (m_maskPoints.size()) {
-        for (const auto p : m_maskPoints) {
-            m_polyline.lineTo(p.x, p.y);
-        }
-    } else {
-        // define default mask size
-        int h = m_proc_height - 4;
-        int w = m_proc_width - 4;
-
-        Point start_point(m_proc_width / 2 - w / 2, (m_proc_height / 2) - h / 2);
-
-        m_polyline.lineTo(start_point.x, start_point.y);
-        m_polyline.lineTo(start_point.x + w, start_point.y);
-        m_polyline.lineTo(start_point.x + w, start_point.y + h);
-        m_polyline.lineTo(start_point.x, start_point.y + h);
-        m_polyline.lineTo(start_point.x, start_point.y);
-
-        for (const auto v : m_polyline.getVertices()) {
-            m_maskPoints.push_back(Point(v.x, v.y));
-        }
-    }
-
-    m_contour_finder.setMinAreaRadius(m_config.settings.minarearadius);
-    m_contour_finder.setMaxAreaRadius(100);
-    m_contour_finder.setThreshold(10);
-
     ofSetWindowTitle("CAM-" + m_camname);
-
-    this->create_mask();
-    this->polygonScaleUp();
 
     m_processing = true;
 }
@@ -135,7 +103,7 @@ void ofApp::update()
             common::log("LOW FRAME RATE " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
         }
 
-        m_boxes.clear();
+        //        m_boxes.clear();
 
         if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
             cv::resize(m_frame, m_resized, cv::Size(m_cam_width, m_cam_height));
@@ -146,8 +114,10 @@ void ofApp::update()
         m_timestamp = common::getTimestamp(m_config.settings.timezone);
         this->drawTimestamp();
 
-        convertColor(m_frame, m_gray, CV_RGB2GRAY);
-        cv::resize(m_gray, m_resized_proc, cv::Size(320, 240));
+        // process motion
+        if (m_motion.update(m_frame)) {
+            //
+        }
     }
 }
 
@@ -160,13 +130,13 @@ void ofApp::draw()
     switch (m_view) {
         case 1: {
             drawMat(m_resized, 0, 0);
-            m_polyline_resized.draw();
+            //    m_polyline_resized.draw();
 
         } break;
 
         case 2:
-            drawMat(m_resized_proc, 0, 0);
-            m_polyline.draw();
+            drawMat(m_motion.getFrame(), 0, 0);
+            // m_polyline.draw();
             break;
 
         default:
@@ -187,44 +157,26 @@ void ofApp::draw()
     ofPopStyle();
 }
 
-//--------------------------------------------------------------
-void ofApp::create_mask()
-{
-    if (m_maskPoints.size() == 0) {
-        m_maskPoints.push_back(cv::Point(2, 2));
-        m_maskPoints.push_back(cv::Point(m_proc_width - 2, 2));
-        m_maskPoints.push_back(cv::Point(m_proc_width - 2, m_proc_height - 2));
-        m_maskPoints.push_back(cv::Point(2, m_proc_height - 2));
-        m_maskPoints.push_back(cv::Point(2, 2));
-    }
+//OB//--------------------------------------------------------------
+// void ofApp::create_mask()
+//{
+// if (m_maskPoints.size() == 0) {
+// m_maskPoints.push_back(cv::Point(2, 2));
+// m_maskPoints.push_back(cv::Point(m_proc_width - 2, 2));
+// m_maskPoints.push_back(cv::Point(m_proc_width - 2, m_proc_height - 2));
+// m_maskPoints.push_back(cv::Point(2, m_proc_height - 2));
+// m_maskPoints.push_back(cv::Point(2, 2));
+//}
 
-    CvMat* matrix = cvCreateMat(m_proc_height, m_proc_width, CV_8UC1);
-    m_mask = cvarrToMat(matrix);
+// CvMat* matrix = cvCreateMat(m_proc_height, m_proc_width, CV_8UC1);
+// m_mask = cvarrToMat(matrix);
 
-    for (int x = 0; x < m_mask.cols; x++) {
-        for (int y = 0; y < m_mask.rows; y++) m_mask.at<uchar>(cv::Point(x, y)) = 0;
-    }
+// for (int x = 0; x < m_mask.cols; x++) {
+// for (int y = 0; y < m_mask.rows; y++) m_mask.at<uchar>(cv::Point(x, y)) = 0;
+//}
 
-    fillPoly(m_mask, m_maskPoints, 255);
-}
-
-//--------------------------------------------------------------
-void ofApp::resetMask()
-{
-    m_maskPoints.clear();
-    m_polyline.clear();
-}
-
-//--------------------------------------------------------------
-void ofApp::polygonScaleUp()
-{
-    m_polyline_resized = m_polyline;
-
-    float scalex = static_cast<float>(m_cam_width * 100 / m_proc_width) / 100;
-    float scaley = static_cast<float>(m_cam_height * 100 / m_proc_height) / 100;
-
-    m_polyline_resized.scale(scalex, scaley);
-}
+// fillPoly(m_mask, m_maskPoints, 255);
+//}
 
 //--------------------------------------------------------------
 void ofApp::drawTimestamp()
@@ -262,7 +214,7 @@ void ofApp::keyPressed(int key)
     if (OF_KEY_F5 == key) {
         if (m_view == 2) {
             m_input_mode = input_mode_t::mask;
-            this->resetMask();
+            m_motion.resetMask();
         }
         return;
     }
@@ -280,7 +232,7 @@ void ofApp::mouseDragged(int x, int y, int button) {}
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button)
 {
-    if (m_input_mode == input_mode_t::mask) {
+    /*if (m_input_mode == input_mode_t::mask) {
         if (button == 0) {
             if (x < m_proc_width && y < m_proc_height) {
                 m_polyline.lineTo(x, y);
@@ -316,7 +268,7 @@ void ofApp::mousePressed(int x, int y, int button)
                 m_config.save(m_camname + ".cfg");
             }
         }
-    }
+    }*/
 }
 
 //--------------------------------------------------------------
