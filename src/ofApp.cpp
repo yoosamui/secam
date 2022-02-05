@@ -74,6 +74,8 @@ void ofApp::setup()
 
     common::log(ss.str());
 
+    m_motion.init();
+
     ofSetWindowTitle("CAM-" + m_camname);
 
     m_processing = true;
@@ -103,8 +105,6 @@ void ofApp::update()
             common::log("LOW FRAME RATE " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
         }
 
-        //        m_boxes.clear();
-
         if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
             cv::resize(m_frame, m_resized, cv::Size(m_cam_width, m_cam_height));
         } else {
@@ -130,15 +130,19 @@ void ofApp::draw()
     switch (m_view) {
         case 1: {
             drawMat(m_resized, 0, 0);
-            //    m_polyline_resized.draw();
+            m_motion.getMaskPolyLineScaled().draw();
 
         } break;
 
         case 2:
             drawMat(m_motion.getFrame(), 0, 0);
-            // m_polyline.draw();
+            m_motion.getMaskPolyLine().draw();
             break;
 
+        case 3:
+            drawMat(m_motion.getMaskImage(), 0, 0);
+            m_motion.getMaskPolyLine().draw();
+            break;
         default:
             return;
     }
@@ -156,27 +160,6 @@ void ofApp::draw()
     ofDrawBitmapStringHighlight(buffer, 1, m_cam_height + 15);
     ofPopStyle();
 }
-
-//OB//--------------------------------------------------------------
-// void ofApp::create_mask()
-//{
-// if (m_maskPoints.size() == 0) {
-// m_maskPoints.push_back(cv::Point(2, 2));
-// m_maskPoints.push_back(cv::Point(m_proc_width - 2, 2));
-// m_maskPoints.push_back(cv::Point(m_proc_width - 2, m_proc_height - 2));
-// m_maskPoints.push_back(cv::Point(2, m_proc_height - 2));
-// m_maskPoints.push_back(cv::Point(2, 2));
-//}
-
-// CvMat* matrix = cvCreateMat(m_proc_height, m_proc_width, CV_8UC1);
-// m_mask = cvarrToMat(matrix);
-
-// for (int x = 0; x < m_mask.cols; x++) {
-// for (int y = 0; y < m_mask.rows; y++) m_mask.at<uchar>(cv::Point(x, y)) = 0;
-//}
-
-// fillPoly(m_mask, m_maskPoints, 255);
-//}
 
 //--------------------------------------------------------------
 void ofApp::drawTimestamp()
@@ -232,43 +215,44 @@ void ofApp::mouseDragged(int x, int y, int button) {}
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button)
 {
-    /*if (m_input_mode == input_mode_t::mask) {
+    if (m_input_mode == input_mode_t::mask) {
+        // TODO make it in motion
         if (button == 0) {
-            if (x < m_proc_width && y < m_proc_height) {
-                m_polyline.lineTo(x, y);
+            if (x < m_motion.getWidth() && y < m_motion.getHeight()) {
+                m_motion.getMaskPolyLine().lineTo(x, y);
             }
 
         } else if (button == 2) {
-            if (m_polyline.size() > 1) {
+            if (m_motion.getMaskPolyLine().size() > 1) {
                 // get the fisrt and last vertices
-                auto v1 = m_polyline.getVertices()[0];
-                auto v2 = m_polyline.getVertices().back();
+                auto v1 = m_motion.getMaskPolyLine().getVertices()[0];
+                auto v2 = m_motion.getMaskPolyLine().getVertices().back();
 
                 // convert to cv::Point
                 Point p1 = Point(v1.x, v1.y);
                 Point p2 = Point(v2.x, v2.y);
 
-                if (p1 != p2) m_polyline.lineTo(p1.x, p1.y);
+                if (p1 != p2) m_motion.getMaskPolyLine().lineTo(p1.x, p1.y);
 
                 // copy the points;
-                m_maskPoints.clear();
+                m_motion.getMaskPoints().clear();
 
-                for (const auto& v : m_polyline) {
-                    m_maskPoints.push_back(Point(v.x, v.y));
+                for (const auto& v : m_motion.getMaskPolyLine()) {
+                    m_motion.getMaskPoints().push_back(Point(v.x, v.y));
                 }
 
                 // create new mask;
                 // m_mask_image.release();
-                this->create_mask();
-                this->polygonScaleUp();
+                m_motion.updateMask();
+                //                this->polygonScaleUp();
 
                 m_input_mode = input_mode_t::none;
 
-                m_config.mask_points = m_maskPoints;
+                m_config.mask_points = m_motion.getMaskPointsCopy();
                 m_config.save(m_camname + ".cfg");
             }
         }
-    }*/
+    }
 }
 
 //--------------------------------------------------------------

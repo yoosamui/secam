@@ -11,9 +11,8 @@ class Motion
     const int height = 240;
 
   public:
-    Motion()
+    void init()
     {
-        common::log("create default mask.");
         m_maskPoints = m_config.mask_points;
 
         if (m_maskPoints.size()) {
@@ -44,11 +43,12 @@ class Motion
         m_contour_finder.setThreshold(10);
 
         this->create_mask();
-        //    this->polygonScaleUp();
     }
 
     bool update(const Mat& frame)
     {
+        m_frame_view = frame;
+
         convertColor(frame, m_gray, CV_RGB2GRAY);
         resize(m_gray, m_gray, Size(width, height));
 
@@ -69,18 +69,35 @@ class Motion
 
         // copy and add mask
         m_threshold.copyTo(m_output, m_mask);
-        m_output.copyTo(m_mask_image);
+        m_gray.copyTo(m_mask_image, m_mask);
 
         return true;
     }
 
+    ofPolyline& getMaskPolyLine() { return m_polyline; }
+    ofPolyline& getMaskPolyLineScaled()
+    {
+        if (!m_polyline_scaled.size()) this->polygonScaleUp();
+
+        return m_polyline_scaled;
+    }
+
+    vector<Point>& getMaskPoints() { return m_maskPoints; }
+    vector<Point> getMaskPointsCopy() { return m_maskPoints; }
+
     const Mat& getFrame() { return m_gray; }
     const Mat& getMaskImage() { return m_mask_image; }
+
+    const int getWidth() { return width; }
+    const int getHeight() { return height; }
+
+    void updateMask() { this->create_mask(); }
 
     void resetMask()
     {
         m_maskPoints.clear();
         m_polyline.clear();
+        m_polyline_scaled.clear();
     }
 
     void draw() {}
@@ -88,6 +105,7 @@ class Motion
   private:
     bool m_first_set = false;
 
+    Mat m_frame_view;
     Mat m_gray;
     Mat m_first;
     Mat m_second;
@@ -100,6 +118,7 @@ class Motion
     Config& m_config = m_config.getInstance();
 
     ofPolyline m_polyline;
+    ofPolyline m_polyline_scaled;
 
     vector<Point> m_maskPoints;
 
@@ -127,12 +146,12 @@ class Motion
 
     void polygonScaleUp()
     {
-        // m_polyline_resized = m_polyline;
+        m_polyline_scaled = m_polyline;
 
-        // float scalex = static_cast<float>(m_cam_width * 100 / m_proc_width) / 100;
-        // float scaley = static_cast<float>(m_cam_height * 100 / m_proc_height) / 100;
+        float scalex = static_cast<float>(m_frame_view.cols * 100 / width) / 100;
+        float scaley = static_cast<float>(m_frame_view.rows * 100 / height) / 100;
 
-        // m_polyline_resized.scale(scalex, scaley);
+        m_polyline_scaled.scale(scalex, scaley);
     }
 };
 

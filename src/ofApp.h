@@ -39,9 +39,6 @@ class ofApp : public ofBaseApp
   private:
     void check_connection();
     void drawTimestamp();
-    //  void create_mask();
-    // void resetMask();
-    //   void polygonScaleUp();
 
     thread spawn()
     {
@@ -53,11 +50,8 @@ class ofApp : public ofBaseApp
     string m_camname;
     string m_timestamp;
 
-    // Mat m_mask;
     Mat m_frame;
-    Mat m_gray;
     Mat m_resized;
-    //    Mat m_resized_proc;
 
     unsigned long m_frame_number = 0;
 
@@ -70,12 +64,6 @@ class ofApp : public ofBaseApp
     int m_cam_width = 640;
     int m_cam_height = 360;
     int m_view = 1;
-
-    // ofPolyline m_polyline;
-    // ofPolyline m_polyline_resized;
-
-    // vector<Point> m_maskPoints;
-    // vector<Rect> m_boxes;
 
     input_mode_t m_input_mode = input_mode_t::none;
 
