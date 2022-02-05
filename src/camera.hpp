@@ -11,6 +11,8 @@ class Camera : public cv::VideoCapture
   public:
     bool connect(const string& uri = "")
     {
+        release();
+
         m_uri = uri;
 
         if (m_uri.empty()) {
@@ -47,10 +49,10 @@ class Camera : public cv::VideoCapture
             if (!open(stream, apiID)) {
                 this_thread::sleep_for(chrono::milliseconds(3000));
                 continue;
-            } else {
-                set(CAP_PROP_MODE, 1);
-                break;
             }
+
+            set(CAP_PROP_MODE, 1);
+            break;
         }
 
         return true;

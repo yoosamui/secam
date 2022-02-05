@@ -15,7 +15,7 @@ void ofApp::check_connection()
         status = common::exec(path.c_str());
         m_network = status == "1" ? true : false;
 
-        if (!m_network) common::log("disconnected", OF_LOG_WARNING);
+        if (!m_network) common::log(ERROR_LOSSCON, OF_LOG_WARNING);
 
         this_thread::sleep_for(chrono::milliseconds(10000));
     }
@@ -167,7 +167,15 @@ void ofApp::draw()
 
     if (m_lowframerate) {
         string lfr = "L O W  F R A M E  R A T E";
-        ofDrawBitmapStringHighlight(lfr, 2, m_cam_height - 10);
+        ofDrawBitmapStringHighlight(ERROR_FRAMELOW, 2, m_cam_height - 10);
+    }
+
+    if (!m_network) {
+        string s = "C O N N E C T I O N  L O S S";
+        if (m_frame_number % 10 == 0) {
+            s = "";
+        }
+        ofDrawBitmapStringHighlight(s, 2, m_cam_height - 10);
     }
 
     char buffer[128];

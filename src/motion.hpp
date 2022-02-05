@@ -95,7 +95,16 @@ class Motion
         m_gray.copyTo(m_mask_image, m_mask);
 #endif
 
-        return this->find();
+        bool found = this->find();
+
+#ifndef MOG2
+        if (m_timex_background.elapsed()) {
+            m_gray.copyTo(m_first);
+            m_timex_background.set();
+        }
+#endif
+
+        return found;
     }
 
     ofPolyline& getMaskPolyLine()
@@ -222,12 +231,6 @@ class Motion
         }
 
         if (found) ofNotifyEvent(on_motion, m_max_rect, this);
-
-        if (m_timex_background.elapsed()) {
-            // if (!found)
-            m_gray.copyTo(m_first);
-            m_timex_background.set();
-        }
 
         return found;
     }
