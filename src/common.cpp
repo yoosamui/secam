@@ -2,9 +2,9 @@
 
 namespace common
 {
-    std::string camname;
+    string camname;
 
-    void setCamName(const std::string& cam)
+    void setCamName(const string& cam)
     {
         // TODO create an object
 
@@ -43,7 +43,7 @@ namespace common
         sprintf(buf, "TZ=%s", time_zone.c_str());
         putenv(buf);
 
-        strftime(buf, sizeof buf, format_string.c_str(), std::localtime(&t));
+        strftime(buf, sizeof buf, format_string.c_str(), localtime(&t));
         string timestamp(buf);
 
         return timestamp;
@@ -105,8 +105,8 @@ namespace common
     // The easiest way of fixing this is to use OpenCV to explicitly convert it back
     // to RGB, much like you do when creating the greyscale image.m_cam >> m_frame;
     // Mat frame;
-    // cvtColor(img, frame, COLOR_BGR2RGB);  // Large CPU usage
-    void bgrtorgb2(cv::Mat& img)
+    // cvtColor(img, frame, COLOR_BGR2RGB);  High CPU Usage
+    /*void bgrtorgb2(cv::Mat& img)
     {
         struct CV_BGR_COLOR {
             uchar blue;
@@ -130,14 +130,14 @@ namespace common
                 color.blue = r;
             }
         }
-    }
+    }*/
 
     // OpenCV uses BGR as its default colour order for images,
     // OF and VideoCapture uses RGB.
     // When you display an image loaded with OpenCv in VideoCapture the channels will
     // be back to front.
-    // cvtColor(img, frame, COLOR_BGR2RGB);  // Large CPU usage
-    void bgrtorgb(cv::Mat& img)
+    // cvtColor(img, frame, COLOR_BGR2RGB);  High CPU Usage
+    void bgr2rgb(cv::Mat& img)
     {
         uchar r, g, b;
         // loop inside the image matrix
@@ -169,22 +169,23 @@ namespace common
     }
     void Timex::set() { m_previousMillis = m_currentMillis; }
     void Timex::reset() { m_previousMillis = ofGetElapsedTimeMillis(); }
-    std::string trim(const std::string& s)
+    string trim(const string& s)
     {
-        std::string::const_iterator it = s.begin();
+        string::const_iterator it = s.begin();
         while (it != s.end() && isspace(*it)) it++;
 
-        std::string::const_reverse_iterator rit = s.rbegin();
+        string::const_reverse_iterator rit = s.rbegin();
         while (rit.base() != it && isspace(*rit)) rit++;
 
-        return std::string(it, rit.base());
+        return string(it, rit.base());
     }
-    std::string exec(const char* cmd)
+
+    string exec(const char* cmd)
     {
         char buffer[NAME_MAX];
-        std::string result = "";
+        string result = "";
         FILE* pipe = popen(cmd, "r");
-        if (!pipe) throw std::runtime_error("popen() failed!");
+        if (!pipe) throw runtime_error("popen() failed!");
         try {
             while (!feof(pipe)) {
                 if (fgets(buffer, 128, pipe) != NULL) result += buffer;

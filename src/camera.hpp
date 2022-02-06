@@ -41,14 +41,11 @@ class Camera : public cv::VideoCapture
             sprintf(stream, "%s", m_uri.c_str());
         }
 
-        common::log("try to connect...");
         common::log("open stream :" + string(stream));
 
         // The open method first calls VideoCapture::release to close
         // the already opened file or camera.
-        open(stream, apiID);
-
-        if (!isOpened()) {
+        if (!open(stream, apiID)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             return false;
         }

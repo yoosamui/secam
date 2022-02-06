@@ -113,7 +113,7 @@ void ofApp::update()
     m_cam >> m_frame;
 
     // TODO config setting
-    common::bgrtorgb(m_frame);
+    common::bgr2rgb(m_frame);
 
     if (!m_frame.empty() && m_network) {
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;

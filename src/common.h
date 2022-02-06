@@ -13,8 +13,7 @@ namespace common
     const string& getCamName();
     void setCamName(const string& camname);
     void log(const string& message, ofLogLevel level = OF_LOG_NOTICE);
-    void bgrtorgb(cv::Mat& img);
-    void bgrtorgb2(cv::Mat& img);
+    void bgr2rgb(cv::Mat& img);
 
     int getSeconds(const string& t);
     int getHours(const string& t);
