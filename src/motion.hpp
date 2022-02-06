@@ -225,12 +225,14 @@ class Motion
                 w = r.width;
                 h = r.height;
 
-                //        ofNotifyEvent(on_motion, m_max_rect, this);
                 found = true;
             }
+
+            m_max_rect = Rect(r);
+            ofNotifyEvent(on_motion, m_max_rect, this);
         }
 
-        if (found) ofNotifyEvent(on_motion, m_max_rect, this);
+        //        if (found) ofNotifyEvent(on_motion, m_max_rect, this);
 
         return found;
     }

@@ -87,7 +87,6 @@ void ofApp::update()
     if (!m_network || !m_cam.isOpened()) {
         common::log("connecting...");
         m_cam.connect();
-
         return;
     }
 
@@ -99,10 +98,11 @@ void ofApp::update()
     // TODO config setting
     common::bgrtorgb(m_frame);
 
-    if (!m_frame.empty()) {
+    if (!m_frame.empty() && m_network) {
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
         if (m_lowframerate) {
-            common::log("LOW FRAME RATE " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+            common::log(string(ERROR_FRAMELOW) + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+            return;
         }
 
         if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
@@ -166,12 +166,11 @@ void ofApp::draw()
     ofPopStyle();
 
     if (m_lowframerate) {
-        string lfr = "L O W  F R A M E  R A T E";
         ofDrawBitmapStringHighlight(ERROR_FRAMELOW, 2, m_cam_height - 10);
     }
 
     if (!m_network) {
-        string s = "C O N N E C T I O N  L O S S";
+        string s = string(ERROR_LOSSCON);
         if (m_frame_number % 10 == 0) {
             s = "";
         }
