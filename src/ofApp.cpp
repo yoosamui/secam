@@ -90,8 +90,8 @@ void ofApp::update()
         return;
     }
 
-    // frames counter. 5 frames time to stabilization.
-    if (m_frame_number++ < FRAME_RATE || !m_processing) return;
+    // 12 frames time to stabilization.
+    if (m_frame_number++ < 12 || !m_processing) return;
 
     m_cam >> m_frame;
 
@@ -101,7 +101,7 @@ void ofApp::update()
     if (!m_frame.empty() && m_network) {
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
         if (m_lowframerate) {
-            common::log(string(ERROR_FRAMELOW) + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+            common::log(string(ERROR_FRAMELOW) + " " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
             return;
         }
 
@@ -117,7 +117,7 @@ void ofApp::update()
         // process motion
         m_detected.clear();
         if (m_motion.update(m_frame)) {
-            common::log("motion detection");
+            common::log("motion detected");
         }
     }
 }
