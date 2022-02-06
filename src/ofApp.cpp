@@ -90,6 +90,7 @@ void ofApp::setup()
 
     m_motion.init();
     ofAddListener(m_motion.on_motion, this, &ofApp::on_motion);
+    ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
 
     ofSetWindowTitle("CAM-" + m_camname);
     m_processing = true;
@@ -133,8 +134,10 @@ void ofApp::update()
 
         // process motion
         m_detected.clear();
-        if (m_motion.update(m_frame)) {
-            common::log("motion detected");
+        m_motion.update(m_frame);
+
+        if (m_motion_detected) {
+            m_motion_detected = false;
         }
     }
 }
@@ -200,6 +203,12 @@ void ofApp::draw()
     ofPushStyle();
     ofDrawBitmapStringHighlight(buffer, 1, m_cam_height + 15);
     ofPopStyle();
+}
+
+//--------------------------------------------------------------
+void ofApp::on_motion_detected(Rect& r)
+{
+    m_motion_detected = true;
 }
 
 //--------------------------------------------------------------

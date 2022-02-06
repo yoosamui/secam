@@ -40,6 +40,7 @@ class ofApp : public ofBaseApp
     void check_connection();
     void drawTimestamp();
     void on_motion(Rect& r);
+    void on_motion_detected(Rect& r);
 
     thread spawn()
     {
@@ -64,6 +65,7 @@ class ofApp : public ofBaseApp
     bool m_processing = false;
     bool m_lowframerate = false;
     bool m_reconnect = false;
+    bool m_motion_detected = false;
 
     int m_cam_width = 640;
     int m_cam_height = 360;

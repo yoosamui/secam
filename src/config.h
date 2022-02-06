@@ -21,11 +21,11 @@ class Config
         string host = "";
         int port = 554;
 
-        int minrectwidth = 40;
+        int minrectwidth = 10;
         int minarearadius = 1;
         int mincontoursize = 1;
-        int detectionsmaxcount = 8;
-        int minthreshold = 130;
+        int detectionsmaxcount = 5;
+        int minthreshold = 90;
 
         string timezone = "Asia/Bangkok";
         int daytime_hour = 6;

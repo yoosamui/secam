@@ -14,12 +14,16 @@ class Motion
 
   public:
     ofEvent<Rect> on_motion;
+    ofEvent<Rect> on_motion_detected;
 
     Motion()
     {
         // update backgound after 5 frames
         int frames = 1000 / FRAME_RATE * 5;
         m_timex_background.setLimit(frames);
+
+        // detection per frames
+        m_timex_detections.setLimit(frames);
     }
 
     void init()
@@ -56,7 +60,7 @@ class Motion
         this->create_mask();
     }
 
-    bool update(const Mat& frame)
+    void update(const Mat& frame)
     {
         m_frame_view = frame;
 
@@ -95,7 +99,7 @@ class Motion
         m_gray.copyTo(m_mask_image, m_mask);
 #endif
 
-        bool found = this->find();
+        this->find();
 
 #ifndef MOG2
         if (m_timex_background.elapsed()) {
@@ -103,8 +107,6 @@ class Motion
             m_timex_background.set();
         }
 #endif
-
-        return found;
     }
 
     ofPolyline& getMaskPolyLine()
@@ -175,14 +177,11 @@ class Motion
         m_polyline_scaled.clear();
     }
 
-    void draw()
-    {
-        //
-    }
-
   private:
     Ptr<cv::BackgroundSubtractorMOG2> mog2 = createBackgroundSubtractorMOG2(100, 16, false);
     bool m_first_set = false;
+
+    int m_detections_count = 0;
 
     Mat m_frame_view;
     Mat m_gray;
@@ -204,13 +203,14 @@ class Motion
     ContourFinder m_contour_finder;
 
     common::Timex m_timex_background;
+    common::Timex m_timex_detections;
 
-    bool find()
+    void find()
     {
         // start contour detection
         m_contour_finder.findContours(m_output);
 
-        Rect m_max_rect = Rect(0, 0, 0, 0);
+        Rect m_max_rect;
         bool found = false;
 
         int w = 0;
@@ -229,9 +229,29 @@ class Motion
             }
         }
 
-        if (found) ofNotifyEvent(on_motion, m_max_rect, this);
+        if (found) {
+            ofNotifyEvent(on_motion, m_max_rect, this);
+            m_detections_count++;
+        }
 
-        return found;
+        // check detections after defined frames.
+        if (m_timex_detections.elapsed()) {
+            // clang-format off
+            if (found &&
+                m_contour_finder.size() >= (size_t)m_config.settings.mincontoursize &&
+                m_detections_count >= m_config.settings.detectionsmaxcount) {
+
+                ofLog() << "motion detected: " << m_detections_count << " w " << m_max_rect
+                        << endl;
+
+                // TODO crate a detection obj
+                ofNotifyEvent(on_motion_detected, m_max_rect, this);
+            }
+            // clang-format on
+
+            m_detections_count = 0;
+            m_timex_detections.set();
+        }
     }
 
     void create_mask()
