@@ -11,10 +11,16 @@ class Config
   private:
     Config() {}
 
+    bool load(const string& filename);
+    void save(const string& filename);
+
     ofxXmlSettings XML;
 
     struct Settings {
         string uri = "data/notfound.jpg";
+        string host = "";
+        int port = 554;
+
         int minrectwidth = 40;
         int minarearadius = 1;
         int mincontoursize = 1;
@@ -35,14 +41,14 @@ class Config
     Config(Config const&) = delete;
     void operator=(Config const&) = delete;
 
+    bool load();
+    void save();
+
     static Config& getInstance()
     {
         static Config instance;
         return instance;
     }
-
-    bool load(const string& filename);
-    void save(const string& filename);
 
     vector<cv::Point> mask_points;
 

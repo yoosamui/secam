@@ -5,6 +5,18 @@
 #define CONFIG_MASKPOINTS "config:maskpoints"
 #define CONFIG_MASKPOINTS_POINT "maskpoints:point"
 
+void Config::save()
+{
+    string filename = common::getCamName() + ".xml";
+    this->save(filename);
+}
+
+bool Config::load()
+{
+    string filename = common::getCamName() + ".xml";
+    return load(filename);
+}
+
 bool Config::load(const string& filename)
 {
     if (!XML.loadFile(filename)) {
@@ -13,6 +25,9 @@ bool Config::load(const string& filename)
     }
 
     settings.uri = XML.getValue("config:uri", settings.uri);
+    settings.host = XML.getValue("config:host", settings.host);
+    settings.port = XML.getValue("config:port", settings.port);
+
     settings.minrectwidth = XML.getValue("config:minrectwidth", settings.minrectwidth);
     settings.minarearadius = XML.getValue("config:minarearadius", settings.minarearadius);
     settings.mincontoursize = XML.getValue("config:mincontoursize", settings.mincontoursize);
@@ -41,6 +56,7 @@ bool Config::load(const string& filename)
     cout << "Configuration loaded." << endl;
     return true;
 }
+
 void Config::save(const string& filename)
 {
     ofxXmlSettings xml;
@@ -49,6 +65,8 @@ void Config::save(const string& filename)
     xml.pushTag("config");
 
     xml.setValue("uri", settings.uri);
+    xml.setValue("host", settings.host);
+    xml.setValue("port", settings.port);
     xml.setValue("minrectwidth", settings.minrectwidth);
     xml.setValue("minarearadius", settings.minarearadius);
     xml.setValue("mincontoursize", settings.mincontoursize);

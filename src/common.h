@@ -10,6 +10,7 @@ using namespace cv;
 
 namespace common
 {
+    const string& getCamName();
     void setCamName(const string& camname);
     void log(const string& message, ofLogLevel level = OF_LOG_NOTICE);
     void bgrtorgb(cv::Mat& img);

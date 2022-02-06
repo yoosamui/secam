@@ -8,14 +8,24 @@
 //--------------------------------------------------------------
 void ofApp::check_connection()
 {
-    string status;
+    string status, path;
     while (m_thread_processing) {
-        auto path = string(CHECK_CONNECTION_SCRIPT);
+        // TODO avoid running a separate process
+        // make it cross platform
+        path = string(CHECK_CONNECTION_SCRIPT);
 
-        status = common::exec(path.c_str());
+        string host = m_config.settings.host;
+        string port = to_string(m_config.settings.port);
+        string cmd = path + " " + host + " " + port;
+
+        status = common::exec(cmd.c_str());
+
         m_network = status == "1" ? true : false;
 
-        if (!m_network) common::log(ERROR_LOSSCON, OF_LOG_WARNING);
+        if (!m_network) {
+            common::log(ERROR_LOSSCON, OF_LOG_WARNING);
+            m_reconnect = true;
+        }
 
         this_thread::sleep_for(chrono::milliseconds(10000));
     }
@@ -51,19 +61,23 @@ void ofApp::setup()
 {
     ofLog::setAutoSpace(false);
 
-    common::log("start check connection thread.");
-    m_checknetwork_thread = this->spawn();
-
     // set frame rate.
     ofSetFrameRate(FRAME_RATE);
     ofSetVerticalSync(true);
 
-    m_config.load("data/" + m_camname + ".cfg");
+    if (!m_config.load()) {
+        terminate();
+    }
+
+    common::log("start check connection thread.");
+    m_checknetwork_thread = this->spawn();
 
     std::stringstream ss;
 
     ss << "Configuration:\n"
        << "uri = " << m_config.settings.uri << "\n"
+       << "host = " << m_config.settings.host << "\n"
+       << "port = " << m_config.settings.port << "\n"
        << "timezone = " << m_config.settings.timezone << "\n"
        << "storage = " << m_config.settings.storage << "\n"
        << "minarearadius = " << m_config.settings.minarearadius << "\n"
@@ -84,9 +98,12 @@ void ofApp::setup()
 //--------------------------------------------------------------
 void ofApp::update()
 {
-    if (!m_network || !m_cam.isOpened()) {
-        common::log("connecting...");
-        m_cam.connect();
+    if (!m_network || !m_cam.isOpened() || m_reconnect) {
+        m_frame_number = 0;
+        while (!m_cam.connect()) {
+            ;
+        }
+        if (m_network) m_reconnect = false;
         return;
     }
 
@@ -258,7 +275,6 @@ void ofApp::mouseDragged(int x, int y, int button) {}
 void ofApp::mousePressed(int x, int y, int button)
 {
     if (m_input_mode == input_mode_t::mask) {
-        // TODO make it in motion
         if (button == 0) {
             if (x < m_motion.getWidth() && y < m_motion.getHeight()) {
                 m_motion.getMaskPolyLine().lineTo(x, y);
@@ -270,13 +286,11 @@ void ofApp::mousePressed(int x, int y, int button)
                 auto v1 = m_motion.getMaskPolyLine().getVertices()[0];
                 auto v2 = m_motion.getMaskPolyLine().getVertices().back();
 
-                // convert to cv::Point
-                Point p1 = Point(v1.x, v1.y);
-                Point p2 = Point(v2.x, v2.y);
+                Point p1(v1.x, v1.y);
+                Point p2(v2.x, v2.y);
 
                 if (p1 != p2) m_motion.getMaskPolyLine().lineTo(p1.x, p1.y);
 
-                // copy the points;
                 m_motion.getMaskPoints().clear();
 
                 for (const auto& v : m_motion.getMaskPolyLine()) {
@@ -284,14 +298,12 @@ void ofApp::mousePressed(int x, int y, int button)
                 }
 
                 // create new mask;
-                // m_mask_image.release();
                 m_motion.updateMask();
-                //                this->polygonScaleUp();
 
                 m_input_mode = input_mode_t::none;
 
                 m_config.mask_points = m_motion.getMaskPointsCopy();
-                m_config.save(m_camname + ".cfg");
+                m_config.save();
             }
         }
     }

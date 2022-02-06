@@ -11,6 +11,12 @@ namespace common
         camname = cam;
     }
 
+    const string& getCamName()
+    {
+        //
+        return camname;
+    }
+
     // Log levels are (in order of priority):
     //
     // OF_LOG_VERBOSE

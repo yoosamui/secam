@@ -63,6 +63,7 @@ class ofApp : public ofBaseApp
     bool m_network = false;
     bool m_processing = false;
     bool m_lowframerate = false;
+    bool m_reconnect = false;
 
     int m_cam_width = 640;
     int m_cam_height = 360;

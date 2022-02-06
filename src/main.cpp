@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!bfs::exists("data/" + camera + ".cfg")) {
+    if (!bfs::exists("data/" + camera + ".xml")) {
         std::cout << "Can't find " + camera + " config file." << std::endl;
         return 1;
     }
