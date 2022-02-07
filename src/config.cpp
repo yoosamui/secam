@@ -20,7 +20,7 @@ bool Config::load()
 bool Config::load(const string& filename)
 {
     if (!XML.loadFile(filename)) {
-        common::log("Configuration File not found. Set default settings.", OF_LOG_WARNING);
+        common::log("load Configuration error.", OF_LOG_WARNING);
         return false;
     }
 

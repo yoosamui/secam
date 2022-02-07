@@ -6,6 +6,7 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
+#include "videowriter.h"
 
 using namespace ofxCv;
 using namespace cv;
@@ -66,10 +67,14 @@ class ofApp : public ofBaseApp
     bool m_lowframerate = false;
     bool m_reconnect = false;
     bool m_motion_detected = false;
+    bool m_recording = false;
+    bool m_manual_recording = false;
 
     int m_cam_width = 640;
     int m_cam_height = 360;
     int m_view = 1;
+
+    common::Timex m_timex_stoprecording;
 
     input_mode_t m_input_mode = input_mode_t::none;
 
@@ -78,4 +83,6 @@ class ofApp : public ofBaseApp
     Camera m_cam;
 
     Motion m_motion;
+
+    Videowriter m_writer;
 };

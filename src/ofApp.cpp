@@ -92,6 +92,11 @@ void ofApp::setup()
     ofAddListener(m_motion.on_motion, this, &ofApp::on_motion);
     ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
 
+    // recording stop timex
+    m_timex_stoprecording.setLimit(30000);
+
+    m_writer.startThread();
+
     ofSetWindowTitle("CAM-" + m_camname);
     m_processing = true;
 }
@@ -117,6 +122,12 @@ void ofApp::update()
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty() && m_network) {
+        m_timestamp = common::getTimestamp(m_config.settings.timezone);
+        this->drawTimestamp();
+
+        // add frame to writer
+        m_writer.add(m_frame);
+
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
         if (m_lowframerate) {
             common::log(string(ERROR_FRAMELOW) + " " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
@@ -129,15 +140,46 @@ void ofApp::update()
             m_frame.copyTo(m_resized);
         }
 
-        m_timestamp = common::getTimestamp(m_config.settings.timezone);
-        this->drawTimestamp();
-
         // process motion
         m_detected.clear();
         m_motion.update(m_frame);
 
         if (m_motion_detected) {
+            // create video
+            if (!m_recording) {
+                auto m_livevideo_filename =
+                    m_writer.set_processing(true, m_frame, "motion_" + m_camname);
+
+                ofResetElapsedTimeCounter();
+                m_recording = true;
+            }
+
+            m_timex_stoprecording.reset();
             m_motion_detected = false;
+
+        } else if (m_manual_recording && !m_recording) {
+            m_manual_recording = false;
+
+            // start the writer
+            auto m_livevideo_filename =
+                m_writer.set_processing(true, m_frame, "recording_" + m_camname);
+
+            ofResetElapsedTimeCounter();
+
+            m_recording = true;
+            m_timex_stoprecording.reset();
+        }
+
+        // stop recording
+        if ((m_recording && m_timex_stoprecording.elapsed())) {
+            // stop recording
+            m_writer.set_processing(false, m_frame);
+            common::log("Recording finish. ");
+            //  m_recording_count++;
+            //   m_recording_time = 0;
+            m_recording = false;
+
+            m_timex_stoprecording.set();
         }
     }
 }
@@ -198,10 +240,36 @@ void ofApp::draw()
     }
 
     char buffer[128];
-    sprintf(buffer, "FPS/Frame: %2.2f/%.10lu ", ofGetFrameRate(), m_frame_number);
+    // clang-format off
+    sprintf(buffer, "FPS/Frame: %2.2f/%.10lu ",
+        ofGetFrameRate(),
+        m_frame_number);
 
+    // clang-format on
+    //
     ofPushStyle();
     ofDrawBitmapStringHighlight(buffer, 1, m_cam_height + 15);
+    ofPopStyle();
+
+    ofPushStyle();
+    if (m_recording) {
+        char buffer[24];
+
+        int et = static_cast<int>(ofGetElapsedTimef());
+        auto h = et / 3600;
+        auto m = (et % 3600) / 60;
+        auto s = et % 60;
+
+        sprintf(buffer, "REC: %02u:%02u:%02u", h, m, s);
+
+        if (m_frame_number % 10 == 0) {
+            ofSetColor(ofColor::red);
+            ofDrawCircle(m_cam_width - 130, m_cam_height + 9, 6);
+        }
+
+        ofSetColor(ofColor::white);
+        ofDrawBitmapStringHighlight(buffer, m_cam_width - 116, m_cam_height + 14);
+    }
     ofPopStyle();
 }
 
@@ -235,8 +303,8 @@ void ofApp::drawTimestamp()
     int x = m_frame.cols;
     int y = 0;
 
-    cv::rectangle(m_resized, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
-    cv::putText(m_resized, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
+    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
+    cv::putText(m_frame, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
                 cv::Scalar(0, 0, 0), thickness, false);
 }
 //--------------------------------------------------------------
@@ -267,6 +335,11 @@ void ofApp::keyPressed(int key)
             m_input_mode = input_mode_t::mask;
             m_motion.resetMask();
         }
+        return;
+    }
+
+    if (OF_KEY_F12 == key) {
+        m_manual_recording = true;
         return;
     }
 }
