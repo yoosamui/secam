@@ -147,7 +147,8 @@ void ofApp::update()
         if (m_motion_detected) {
             // create video
             if (!m_recording) {
-                auto m_livevideo_filename = m_writer.set_processing(true);
+                auto m_videofilename = m_writer.start("motion_");
+                common::log("recording: " + m_videofilename);
 
                 ofResetElapsedTimeCounter();
                 m_recording = true;
@@ -160,19 +161,20 @@ void ofApp::update()
             m_manual_recording = false;
 
             // start the writer
-            auto m_livevideo_filename = m_writer.set_processing(true);
+            auto m_videofilename = m_writer.start("recording_");
+            common::log("recording: " + m_videofilename);
 
             ofResetElapsedTimeCounter();
-
             m_recording = true;
+
             m_timex_stoprecording.reset();
         }
 
         // stop recording
         if ((m_recording && m_timex_stoprecording.elapsed())) {
             // stop recording
-            m_writer.set_processing(false);
-            common::log("Recording finish. ");
+            m_writer.stop();
+            common::log("Recording finish.");
             //  m_recording_count++;
             //   m_recording_time = 0;
             m_recording = false;
@@ -229,19 +231,11 @@ void ofApp::draw()
         ofDrawBitmapStringHighlight(ERROR_FRAMELOW, 2, m_cam_height - 10);
     }
 
-    if (!m_network) {
-        string s = string(ERROR_LOSSCON);
-        if (m_frame_number % 10 == 0) {
-            s = "";
-        }
-        ofDrawBitmapStringHighlight(s, 2, m_cam_height - 10);
-    }
-
     char buffer[128];
     // clang-format off
-    sprintf(buffer, "FPS/Frame: %2.2f/%.10lu ",
+    sprintf(buffer, "FPS/Frame: %2.2f/%.lu queue:%ld ",
         ofGetFrameRate(),
-        m_frame_number);
+        m_frame_number, m_writer.get_queue().size());
 
     // clang-format on
     //
@@ -259,14 +253,13 @@ void ofApp::draw()
         auto s = et % 60;
 
         sprintf(buffer, "REC: %02u:%02u:%02u", h, m, s);
+        ofSetColor(ofColor::white);
+        ofDrawBitmapStringHighlight(buffer, m_cam_width - 116, m_cam_height + 14);
 
         if (m_frame_number % 10 == 0) {
             ofSetColor(ofColor::red);
-            ofDrawCircle(m_cam_width - 130, m_cam_height + 9, 6);
+            ofDrawCircle(m_cam_width - 126, m_cam_height + 9, 6);
         }
-
-        ofSetColor(ofColor::white);
-        ofDrawBitmapStringHighlight(buffer, m_cam_width - 116, m_cam_height + 14);
     }
     ofPopStyle();
 }
