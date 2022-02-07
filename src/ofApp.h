@@ -6,7 +6,7 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
-#include "videowriter.h"
+#include "videowriter.hpp"
 
 using namespace ofxCv;
 using namespace cv;

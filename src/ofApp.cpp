@@ -147,8 +147,7 @@ void ofApp::update()
         if (m_motion_detected) {
             // create video
             if (!m_recording) {
-                auto m_livevideo_filename =
-                    m_writer.set_processing(true, m_frame, "motion_" + m_camname);
+                auto m_livevideo_filename = m_writer.set_processing(true);
 
                 ofResetElapsedTimeCounter();
                 m_recording = true;
@@ -161,8 +160,7 @@ void ofApp::update()
             m_manual_recording = false;
 
             // start the writer
-            auto m_livevideo_filename =
-                m_writer.set_processing(true, m_frame, "recording_" + m_camname);
+            auto m_livevideo_filename = m_writer.set_processing(true);
 
             ofResetElapsedTimeCounter();
 
@@ -173,7 +171,7 @@ void ofApp::update()
         // stop recording
         if ((m_recording && m_timex_stoprecording.elapsed())) {
             // stop recording
-            m_writer.set_processing(false, m_frame);
+            m_writer.set_processing(false);
             common::log("Recording finish. ");
             //  m_recording_count++;
             //   m_recording_time = 0;
