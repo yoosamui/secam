@@ -74,6 +74,7 @@ class ofApp : public ofBaseApp
     bool m_motion_detected = false;
     bool m_recording = false;
     bool m_manual_recording = false;
+    bool m_draw_mask_poly = false;
 
     int m_recording_duration = VIDEODURATION;
     int m_cam_width = 640;
@@ -81,15 +82,14 @@ class ofApp : public ofBaseApp
     int m_view = 1;
 
     common::Timex m_timex_stoprecording;
+    common::Timex m_timex_recording_point;
     common::Timex m_timex_second;
 
     input_mode_t m_input_mode = input_mode_t::none;
 
     Config& m_config = m_config.getInstance();
-
     Camera m_cam;
-
     Motion m_motion;
-
     Videowriter m_writer;
+    ofTrueTypeFont m_font;
 };

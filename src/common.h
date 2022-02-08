@@ -7,6 +7,7 @@
 
 using namespace ofxCv;
 using namespace cv;
+using namespace std;
 
 namespace common
 {
@@ -18,6 +19,7 @@ namespace common
     int getSeconds(const string& t);
     int getHours(const string& t);
 
+    string getElapsedTimeString();
     string getTimestamp(const string& time_zone, const string& format_string = "%Y.%m.%d %T");
     string trim(const string& s);
     string exec(const char* cmd);

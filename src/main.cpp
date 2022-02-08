@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
         ofSetupOpenGL(&window, 10, 10, OF_WINDOW);
         cout << "start secam as server." << endl;
     } else {
-        ofSetupOpenGL(width, height + 30, OF_WINDOW);
+        ofSetupOpenGL(width, height, OF_WINDOW);
     }
 
     auto app = std::make_shared<ofApp>();

@@ -1,5 +1,6 @@
 #include "ofApp.h"
 
+#include <boost/format.hpp>
 #include <iostream>
 #include <thread>
 
@@ -99,10 +100,14 @@ void ofApp::setup()
     // recording stop timex
     m_timex_stoprecording.setLimit(30000);
     m_timex_second.setLimit(1000);
+    m_timex_recording_point.setLimit(1000);
 
     m_writer.startThread();
 
-    ofSetWindowTitle("CAM-" + m_camname);
+    ofSetWindowTitle("CAM-" + m_camname + " / " + m_config.settings.timezone);
+
+    if (!m_server_mode) m_font.load(OF_TTF_SANS, 9, true, true);
+
     m_processing = true;
 }
 
@@ -152,6 +157,7 @@ void ofApp::update()
         if (m_motion_detected) {
             // create video
             if (!m_recording) {
+                // start recording
                 auto m_videofilename = m_writer.start("motion_");
 
                 stringstream ss;
@@ -170,7 +176,7 @@ void ofApp::update()
         } else if (m_manual_recording && !m_recording) {
             m_manual_recording = false;
 
-            // start the writer
+            // start recording
             auto m_videofilename = m_writer.start("recording_");
 
             stringstream ss;
@@ -211,11 +217,11 @@ void ofApp::draw()
     ofBackground(ofColor::black);
 
     switch (m_view) {
-        case 1: {
+        case 1:
             drawMat(m_resized, 0, 0);
-            m_motion.getMaskPolyLineScaled().draw();
+            if (m_draw_mask_poly) m_motion.getMaskPolyLineScaled().draw();
 
-        } break;
+            break;
 
         case 2:
             drawMat(m_motion.getFrame(), 0, 0);
@@ -244,30 +250,21 @@ void ofApp::draw()
     m_detected.draw();
     ofPopStyle();
 
-    if (m_lowframerate) {
-        ofDrawBitmapStringHighlight(ERROR_FRAMELOW, 2, m_cam_height - 10);
-    }
-
     ofPushStyle();
-    ofDrawBitmapStringHighlight(getStatusInfo(), 1, m_cam_height + 15);
+    m_font.drawString(getStatusInfo(), 1, m_cam_height - 6);
     ofPopStyle();
 
     ofPushStyle();
     if (m_recording) {
-        char buffer[24];
-
-        int et = static_cast<int>(ofGetElapsedTimef());
-        auto h = et / 3600;
-        auto m = (et % 3600) / 60;
-        auto s = et % 60;
-
-        sprintf(buffer, "REC: %02u:%02u:%02u", h, m, s);
         ofSetColor(ofColor::white);
-        ofDrawBitmapStringHighlight(buffer, m_cam_width - 116, m_cam_height + 14);
+        m_font.drawString("REC: " + common::getElapsedTimeString(), m_cam_width - 100,
+                          m_cam_height - 6);
 
-        if (m_frame_number % 10 == 0) {
+        if (m_timex_recording_point.elapsed()) {
             ofSetColor(ofColor::red);
-            ofDrawCircle(m_cam_width - 126, m_cam_height + 9, 6);
+            ofDrawCircle(m_cam_width - 110, m_cam_height - 11, 6);
+
+            m_timex_recording_point.set();
         }
     }
     ofPopStyle();
@@ -276,20 +273,24 @@ void ofApp::draw()
 //--------------------------------------------------------------
 string& ofApp::getStatusInfo()
 {
-    char buffer[128];
+    ostringstream result;
+    const string f = "FPS/Frame: %2.2f/%.9lu q:%.2ld [ %3d, %3d, %3d, %3d ] [vid:%.2d]";
+
     // clang-format off
-    sprintf(buffer, "FPS/Frame: %2.2f/%.lu q:%ld [ %3d, %3d, %3d, %3d ] vid:%2d",
-        ofGetFrameRate(),
-        m_frame_number,
-        m_writer.get_queue().size(),
-        m_config.settings.minthreshold,
-        m_config.settings.minrectwidth,
-        m_config.settings.mincontoursize,
-        m_config.settings.detectionsmaxcount,
-        m_recording_duration);
+
+     result << boost::format(f)
+            % ofGetFrameRate()
+            % m_frame_number
+            % m_writer.get_queue().size()
+            % m_config.settings.minthreshold
+            % m_config.settings.minrectwidth
+            % m_config.settings.mincontoursize
+            % m_config.settings.detectionsmaxcount
+            % m_recording_duration;
 
     // clang-format on
-    m_statusinfo = string(buffer);
+
+    m_statusinfo = result.str();
     return m_statusinfo;
 }
 //--------------------------------------------------------------
@@ -346,6 +347,11 @@ void ofApp::keyPressed(int key)
 
     if (key == '4') {
         m_view = 4;
+        return;
+    }
+
+    if (key == 'i') {
+        m_draw_mask_poly = !m_draw_mask_poly;
         return;
     }
 
