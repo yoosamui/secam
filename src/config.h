@@ -17,7 +17,7 @@ class Config
     ofxXmlSettings XML;
 
     struct Settings {
-        string uri = "data/notfound.jpg";
+        string uri = "data/notfound.png";
         string host = "";
         int port = 554;
 
