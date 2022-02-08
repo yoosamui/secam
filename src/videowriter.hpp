@@ -41,16 +41,13 @@ class Videowriter : public ofThread, public VideoWriter
 
         Mat rgb;
         img.copyTo(rgb);
+        common::bgr2rgb(rgb);
 
-        //        common::bgr2rgb(rgb);
         m_queue.push(rgb);
     }
 
-    void stop()
+    bool stop()
     {
-        m_processing = false;
-        release();
-
         if (boost::filesystem::exists(string(TMPDIR))) {
             const string s = m_source_dir + m_file;
             const string d = m_destination_dir + m_file;
@@ -71,6 +68,11 @@ class Videowriter : public ofThread, public VideoWriter
                 common::log(e.what(), OF_LOG_ERROR);
             }
         }
+
+        m_processing = false;
+        release();
+
+        return true;
     }
 
     string start(const string& prefix)

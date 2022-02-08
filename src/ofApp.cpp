@@ -10,8 +10,6 @@ void ofApp::check_connection()
 {
     string status, path;
     while (m_thread_processing) {
-        // TODO avoid running a separate process
-        // make it cross platform
         path = string(CHECK_CONNECTION_SCRIPT);
 
         string host = m_config.settings.host;
@@ -19,6 +17,7 @@ void ofApp::check_connection()
         string cmd = path + " " + host + " " + port;
 
         status = common::exec(cmd.c_str());
+        //        status = ofSystem(cmd.c_str());
 
         m_network = status == "1" ? true : false;
 
@@ -27,7 +26,7 @@ void ofApp::check_connection()
             m_reconnect = true;
         }
 
-        this_thread::sleep_for(chrono::milliseconds(10000));
+        ofSleepMillis(10000);
     }
 }
 
@@ -69,10 +68,11 @@ void ofApp::setup()
         terminate();
     }
 
-    common::log("start check connection thread.");
     m_checknetwork_thread = this->spawn();
 
-    std::stringstream ss;
+    common::log("PLATFORM: " + ofGetTargetPlatform());
+
+    stringstream ss;
 
     ss << "Configuration:\n"
        << "uri = " << m_config.settings.uri << "\n"
@@ -94,6 +94,7 @@ void ofApp::setup()
 
     // recording stop timex
     m_timex_stoprecording.setLimit(30000);
+    m_timex_second.setLimit(1000);
 
     m_writer.startThread();
 
@@ -148,13 +149,18 @@ void ofApp::update()
             // create video
             if (!m_recording) {
                 auto m_videofilename = m_writer.start("motion_");
-                common::log("recording: " + m_videofilename);
+
+                stringstream ss;
+                ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+                common::log(ss.str());
 
                 ofResetElapsedTimeCounter();
                 m_recording = true;
             }
 
+            m_recording_duration = VIDEODURATION;
             m_timex_stoprecording.reset();
+
             m_motion_detected = false;
 
         } else if (m_manual_recording && !m_recording) {
@@ -162,7 +168,10 @@ void ofApp::update()
 
             // start the writer
             auto m_videofilename = m_writer.start("recording_");
-            common::log("recording: " + m_videofilename);
+
+            stringstream ss;
+            ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+            common::log(ss.str());
 
             ofResetElapsedTimeCounter();
             m_recording = true;
@@ -170,16 +179,22 @@ void ofApp::update()
             m_timex_stoprecording.reset();
         }
 
-        // stop recording
-        if ((m_recording && m_timex_stoprecording.elapsed())) {
-            // stop recording
-            m_writer.stop();
-            common::log("Recording finish.");
-            //  m_recording_count++;
-            //   m_recording_time = 0;
-            m_recording = false;
+        if (m_recording) {
+            if (m_timex_second.elapsed()) {
+                m_recording_duration--;
 
-            m_timex_stoprecording.set();
+                m_timex_second.set();
+            }
+
+            if (m_timex_stoprecording.elapsed()) {
+                if (m_writer.stop()) {
+                    common::log("Recording finish.");
+                    m_recording_duration = VIDEODURATION;
+                    m_recording = false;
+                }
+
+                m_timex_stoprecording.set();
+            }
         }
     }
 }
@@ -222,25 +237,15 @@ void ofApp::draw()
     ofNoFill();
     ofSetLineWidth(1.5);
     ofSetColor(yellowPrint);
-
     m_detected.draw();
-
     ofPopStyle();
 
     if (m_lowframerate) {
         ofDrawBitmapStringHighlight(ERROR_FRAMELOW, 2, m_cam_height - 10);
     }
 
-    char buffer[128];
-    // clang-format off
-    sprintf(buffer, "FPS/Frame: %2.2f/%.lu queue:%ld ",
-        ofGetFrameRate(),
-        m_frame_number, m_writer.get_queue().size());
-
-    // clang-format on
-    //
     ofPushStyle();
-    ofDrawBitmapStringHighlight(buffer, 1, m_cam_height + 15);
+    ofDrawBitmapStringHighlight(getStatusInfo(), 1, m_cam_height + 15);
     ofPopStyle();
 
     ofPushStyle();
@@ -264,6 +269,25 @@ void ofApp::draw()
     ofPopStyle();
 }
 
+//--------------------------------------------------------------
+string& ofApp::getStatusInfo()
+{
+    char buffer[128];
+    // clang-format off
+    sprintf(buffer, "FPS/Frame: %2.2f/%.lu q:%ld [ %3d, %3d, %3d, %3d ] vid:%2d",
+        ofGetFrameRate(),
+        m_frame_number,
+        m_writer.get_queue().size(),
+        m_config.settings.minthreshold,
+        m_config.settings.minrectwidth,
+        m_config.settings.mincontoursize,
+        m_config.settings.detectionsmaxcount,
+        m_recording_duration);
+
+    // clang-format on
+    m_statusinfo = string(buffer);
+    return m_statusinfo;
+}
 //--------------------------------------------------------------
 void ofApp::on_motion_detected(Rect& r)
 {

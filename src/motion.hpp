@@ -52,7 +52,6 @@ class Motion
             }
         }
 
-        common::log("setup countour finder.");
         m_contour_finder.setMinAreaRadius(m_config.settings.minarearadius);
         m_contour_finder.setMaxAreaRadius(100);
         m_contour_finder.setThreshold(10);
@@ -241,8 +240,7 @@ class Motion
                 m_contour_finder.size() >= (size_t)m_config.settings.mincontoursize &&
                 m_detections_count >= m_config.settings.detectionsmaxcount) {
 
-                ofLog() << "motion detected: " << m_detections_count << " w " << m_max_rect
-                        << endl;
+                common::log("motion detected: " +to_string(m_detections_count)+" w " + to_string(m_max_rect.width));
 
                 // TODO crate a detection obj
                 ofNotifyEvent(on_motion_detected, m_max_rect, this);

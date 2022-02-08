@@ -11,10 +11,11 @@
 using namespace ofxCv;
 using namespace cv;
 
-enum input_mode_t { none, mask, motion };
-
 class ofApp : public ofBaseApp
 {
+    enum input_mode_t { none, mask, motion };
+    const int VIDEODURATION = 30;
+
   public:
     void setup();
     void update();
@@ -43,6 +44,8 @@ class ofApp : public ofBaseApp
     void on_motion(Rect& r);
     void on_motion_detected(Rect& r);
 
+    string& getStatusInfo();
+
     thread spawn()
     {
         return thread([this] { this->check_connection(); });
@@ -58,6 +61,8 @@ class ofApp : public ofBaseApp
     Mat m_frame;
     Mat m_resized;
 
+    string m_statusinfo;
+
     unsigned long m_frame_number = 0;
 
     bool m_server_mode = false;
@@ -70,11 +75,13 @@ class ofApp : public ofBaseApp
     bool m_recording = false;
     bool m_manual_recording = false;
 
+    int m_recording_duration = VIDEODURATION;
     int m_cam_width = 640;
     int m_cam_height = 360;
     int m_view = 1;
 
     common::Timex m_timex_stoprecording;
+    common::Timex m_timex_second;
 
     input_mode_t m_input_mode = input_mode_t::none;
 
