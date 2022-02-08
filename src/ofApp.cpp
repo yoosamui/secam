@@ -323,8 +323,8 @@ void ofApp::drawTimestamp()
     int x = m_frame.cols;
     int y = 0;
 
-    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
-    cv::putText(m_frame, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
+    cv::rectangle(m_resized, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
+    cv::putText(m_resized, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
                 cv::Scalar(0, 0, 0), thickness, false);
 }
 //--------------------------------------------------------------
