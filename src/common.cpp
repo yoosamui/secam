@@ -1,8 +1,23 @@
 #include "common.h"
 
+#include <boost/format.hpp>
+
 namespace common
 {
     string camname;
+
+    string getElapsedTimeString()
+    {
+        ostringstream result;
+        int et = static_cast<int>(ofGetElapsedTimef());
+        auto h = et / 3600;
+        auto m = (et % 3600) / 60;
+        auto s = et % 60;
+
+        result << boost::format("%02u:%02u:%02u") % h % m % s;
+
+        return result.str();
+    }
 
     void setCamName(const string& cam)
     {
@@ -101,42 +116,7 @@ namespace common
     // OF and VideoCapture uses RGB.
     // When you display an image loaded with OpenCv in VideoCapture the channels will
     // be back to front.
-    //
-    // The easiest way of fixing this is to use OpenCV to explicitly convert it back
-    // to RGB, much like you do when creating the greyscale image.m_cam >> m_frame;
-    // Mat frame;
-    // cvtColor(img, frame, COLOR_BGR2RGB);  High CPU Usage
-    /*void bgrtorgb2(cv::Mat& img)
-    {
-        struct CV_BGR_COLOR {
-            uchar blue;
-            uchar green;
-            uchar red;
-        };
-
-        // loop inside the image matrix
-        for (int y = 0; y < img.rows; y++) {
-            for (int x = 0; x < img.cols; x++) {
-                CV_BGR_COLOR& color = img.ptr<CV_BGR_COLOR>(y)[x];
-
-                // get the BGR color
-                auto b = color.blue;
-                auto g = color.green;
-                auto r = color.red;
-
-                // set the RGB color
-                color.red = b;
-                color.green = g;
-                color.blue = r;
-            }
-        }
-    }*/
-
-    // OpenCV uses BGR as its default colour order for images,
-    // OF and VideoCapture uses RGB.
-    // When you display an image loaded with OpenCv in VideoCapture the channels will
-    // be back to front.
-    // cvtColor(img, frame, COLOR_BGR2RGB);  High CPU Usage
+    // avoid cvtColor(img, frame, COLOR_BGR2RGB) High CPU Usage.
     void bgr2rgb(cv::Mat& img)
     {
         uchar r, g, b;
