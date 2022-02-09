@@ -11,7 +11,7 @@ class IMotion
     virtual void test() const = 0;
 };
 
-class Motion  //: public IMotion
+class Motion : public IMotion
 {
     const int width = 320;
     const int height = 240;
@@ -31,6 +31,10 @@ class Motion  //: public IMotion
         m_timex_detections.setLimit(frames);
     }
 
+    void test() const override
+    {
+        //
+    }
     void init()
     {
         m_maskPoints = m_config.mask_points;
