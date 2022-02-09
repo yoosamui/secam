@@ -5,7 +5,7 @@
 #include "constants.h"
 #include "ofxOpenCv.h"
 
-#define MOG2
+//#define MOG2
 
 class Motion
 {
@@ -19,7 +19,7 @@ class Motion
     Motion()
     {
         // update backgound after 5 frames
-        int frames = 1000 / FRAME_RATE * 5;
+        int frames = 1000 / common::getFps() * 5;
         m_timex_background.setLimit(frames);
 
         // detection per frames

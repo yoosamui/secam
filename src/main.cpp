@@ -13,6 +13,7 @@ static const string keys =
     "{ help h   |       | print help message. }"
     "{ camera c |       | load the camera config.cfg file and starts streaming. }"
     "{ mode m   | 0     | start secam as client = 0 or server = 1  instance.}"
+    "{ fps  f   | 15    | frame rate.}"
     "{ width w  | 640   | stream width. }"
     "{ height h | 360   | stream height. }";
 
@@ -35,6 +36,12 @@ int main(int argc, char* argv[])
     auto width = parser.get<int>("width");
     auto height = parser.get<int>("height");
     auto mode = parser.get<int>("mode");
+    auto fps = parser.get<int>("fps");
+
+    if (fps < 15 || fps > 60) {
+        cout << "invalid fps values." << endl;
+        return 1;
+    }
 
     if (height < 50 || width < 50) {
         cout << "invalid width, height values." << endl;
@@ -64,7 +71,7 @@ int main(int argc, char* argv[])
     ofAppNoWindow window;
 
     if (mode) {
-        ofSetupOpenGL(&window, 10, 10, OF_WINDOW);
+        ofSetupOpenGL(&window, width, height, OF_WINDOW);
         cout << "start secam as server." << endl;
     } else {
         ofSetupOpenGL(width, height, OF_WINDOW);
@@ -77,6 +84,7 @@ int main(int argc, char* argv[])
     app->setServerMode(mode);
     app->setCamWidth(width);
     app->setCamHeight(height);
+    app->setFps(fps);
 
     ofRunApp(app);
 

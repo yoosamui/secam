@@ -37,6 +37,7 @@ class ofApp : public ofBaseApp
     void setServerMode(int mode);
     void setCamWidth(int width);
     void setCamHeight(int height);
+    void setFps(int fps);
 
   private:
     void check_connection();
@@ -80,6 +81,7 @@ class ofApp : public ofBaseApp
     int m_cam_width = 640;
     int m_cam_height = 360;
     int m_view = 1;
+    int m_fps;
 
     common::Timex m_timex_stoprecording;
     common::Timex m_timex_recording_point;
