@@ -114,7 +114,9 @@ void ofApp::setup()
 //--------------------------------------------------------------
 void ofApp::update()
 {
-    if (!m_network || !m_cam.isOpened() || m_reconnect) {
+    m_cam >> m_frame;
+
+    if (!m_network || !m_cam.isOpened() || m_reconnect || m_frame.empty()) {
         m_frame_number = 0;
         while (!m_cam.connect()) {
             ;
@@ -125,8 +127,6 @@ void ofApp::update()
 
     // 12 frames time to stabilization.
     if (m_frame_number++ < 12 || !m_processing) return;
-
-    m_cam >> m_frame;
 
     // TODO config setting
     common::bgr2rgb(m_frame);
@@ -152,7 +152,7 @@ void ofApp::update()
 
         // process motion
         m_detected.clear();
-        m_motion.update(m_frame);
+        m_motion.update(m_resized);
 
         if (m_motion_detected) {
             // create video
@@ -323,8 +323,8 @@ void ofApp::drawTimestamp()
     int x = m_frame.cols;
     int y = 0;
 
-    cv::rectangle(m_resized, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
-    cv::putText(m_resized, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
+    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
+    cv::putText(m_frame, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
                 cv::Scalar(0, 0, 0), thickness, false);
 }
 //--------------------------------------------------------------
