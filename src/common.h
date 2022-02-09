@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofThread.h"
+//#include "ofThread.h"
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
 
@@ -9,21 +9,8 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-struct Params {
-    string camname;
-    int width;
-    int height;
-    int mode;
-    int fps;
-};
-
 namespace common
 {
-    Params getParams();
-
-    bool isServer();
-
-    //  void setParams(CommandLineParser parser);
     void log(const string& message, ofLogLevel level = OF_LOG_NOTICE);
     void bgr2rgb(cv::Mat& img);
 

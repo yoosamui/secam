@@ -2,32 +2,10 @@
 
 #include <boost/format.hpp>
 
+#include "config.h"
+
 namespace common
 {
-    Params params;
-
-    bool isServer()
-    {
-        return true;
-
-        //
-        //    return params.mode == 1;
-    }
-
-    // void setParams(CommandLineParser parser)
-    //{
-    // terminate();
-    // params.camname = parser.get<std::string>("camera");
-    //// params.width = parser.get<int>("width");
-    //// params.height = parser.get<int>("height");
-    //// params.mode = parser.get<int>("mode");
-    //// params.fps = parser.get<int>("fps");
-
-    // cout << params.camname << endl;
-    //}
-
-    Params getParams() { return params; }
-
     string getElapsedTimeString()
     {
         ostringstream result;
@@ -52,7 +30,10 @@ namespace common
     //
     void log(const string& message, ofLogLevel level)
     {
-        ofLogToFile("data/logs/" + params.camname + ".log", true);
+        // TODO factory
+        Config& m_config = m_config.getInstance();
+
+        ofLogToFile("data/logs/" + m_config.parameters.camname + ".log", true);
         ofLog(level) << message << endl;
 
         ofLogToConsole();

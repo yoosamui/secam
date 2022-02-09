@@ -10,14 +10,13 @@
 
 using namespace ofxCv;
 using namespace cv;
-#define OK
+
 class ofApp : public ofBaseApp
 {
     enum input_mode_t { none, mask, motion };
     const int VIDEODURATION = 30;
 
   public:
-#ifdef OK
     void setup();
     void update();
     void draw();
@@ -32,8 +31,6 @@ class ofApp : public ofBaseApp
     void windowResized(int w, int h);
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
-
-    // void setParameters(CommandLineParser parser);
 
   private:
     void check_connection();
@@ -52,7 +49,6 @@ class ofApp : public ofBaseApp
 
     ofPolyline m_detected;
 
-    string m_camname;
     string m_timestamp;
 
     Mat m_frame;
@@ -62,7 +58,6 @@ class ofApp : public ofBaseApp
 
     unsigned long m_frame_number = 0;
 
-    bool m_server_mode = false;
     bool m_thread_processing = true;
     bool m_network = false;
     bool m_processing = false;
@@ -90,5 +85,4 @@ class ofApp : public ofBaseApp
     Motion m_motion;
     Videowriter m_writer;
     ofTrueTypeFont m_font;
-#endif
 };

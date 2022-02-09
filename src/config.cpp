@@ -1,26 +1,30 @@
 #include "config.h"
 
-#include "common.h"
+//#include "common.h"
 
 #define CONFIG_MASKPOINTS "config:maskpoints"
 #define CONFIG_MASKPOINTS_POINT "maskpoints:point"
 
+bool Config::isServer()
+{
+    return parameters.mode == 1;
+}
+
 void Config::save()
 {
-    string filename = common::getParams().camname + ".xml";
+    string filename = this->parameters.camname + ".xml";
     this->save(filename);
 }
 
 bool Config::load()
 {
-    string filename = common::getParams().camname + ".xml";
+    string filename = this->parameters.camname + ".xml";
     return load(filename);
 }
 
 bool Config::load(const string& filename)
 {
     if (!XML.loadFile(filename)) {
-        common::log("load Configuration error.", OF_LOG_WARNING);
         return false;
     }
 

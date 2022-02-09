@@ -14,7 +14,7 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = common::getParams().fps * 10;
+const uint16_t QUEUE_MAX_SIZE = 100;  // m_config.parameters.fps * 10;
 
 class Videowriter : public ofThread, public VideoWriter
 {
@@ -29,7 +29,7 @@ class Videowriter : public ofThread, public VideoWriter
         if (!m_processing) {
             // make space for new frames
             if (m_queue.size() > QUEUE_MAX_SIZE) {
-                for (int i = 0; i < common::getParams().fps; i++) {
+                for (int i = 0; i < m_config.parameters.fps; i++) {
                     m_queue.pop();
                 }
                 return;
@@ -92,7 +92,9 @@ class Videowriter : public ofThread, public VideoWriter
 
             bool isColor = (src.type() == CV_8UC3);
 
-            string filename = get_filepath(prefix + common::getParams().camname, ".mkv");
+            // TODO factory
+            Config& m_config = m_config.getInstance();
+            string filename = get_filepath(prefix + m_config.parameters.camname, ".mkv");
             result = filename;
 
             open(filename, apiID, codec, fps, src.size(), isColor);

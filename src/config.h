@@ -8,6 +8,14 @@
 
 class Config
 {
+    struct Params {
+        string camname;
+        int width;
+        int height;
+        int mode;
+        int fps;
+    };
+
   private:
     Config() {}
 
@@ -38,19 +46,22 @@ class Config
     };
 
   public:
+    vector<cv::Point> mask_points;
+
+    Settings settings;
+    Params parameters;
+
     Config(Config const&) = delete;
+
     void operator=(Config const&) = delete;
+    void save();
 
     bool load();
-    void save();
+    bool isServer();
 
     static Config& getInstance()
     {
         static Config instance;
         return instance;
     }
-
-    vector<cv::Point> mask_points;
-
-    Settings settings;
 };

@@ -36,14 +36,7 @@ void ofApp::check_connection()
 }
 
 //--------------------------------------------------------------
-// void ofApp::setParameters(CommandLineParser parser)
-//{
-////   common::setParameters(parser);
-// terminate();
-//}
-#define ok
-#ifdef ok
-//--------------------------------------------------------------
+
 void ofApp::setup()
 {
     ofLog::setAutoSpace(false);
@@ -54,6 +47,7 @@ void ofApp::setup()
     ofSetVerticalSync(true);
 
     if (!m_config.load()) {
+        common::log("load Configuration error.", OF_LOG_WARNING);
         terminate();
     }
 
@@ -73,7 +67,9 @@ void ofApp::setup()
        << "minrectwidth = " << m_config.settings.minrectwidth << "\n"
        << "minthreshold = " << m_config.settings.minthreshold << "\n"
        << "mincontousize =  " << m_config.settings.mincontoursize << "\n"
-       << "detectionsmaxcount = " << m_config.settings.detectionsmaxcount << endl;
+       << "detectionsmaxcount = " << m_config.settings.detectionsmaxcount << "\n"
+       << endl;
+    // << "parameters = " << m_config.parameters << endl;
 
     common::log(ss.str());
 
@@ -88,9 +84,9 @@ void ofApp::setup()
 
     m_writer.startThread();
 
-    ofSetWindowTitle("CAM-" + m_camname + " / " + m_config.settings.timezone);
+    ofSetWindowTitle("CAM-" + m_config.parameters.camname + " / " + m_config.settings.timezone);
 
-    if (!m_server_mode) m_font.load(OF_TTF_SANS, 9, true, true);
+    if (!m_config.isServer()) m_font.load(OF_TTF_SANS, 9, true, true);
 
     m_processing = true;
 }
@@ -196,7 +192,7 @@ void ofApp::update()
 //--------------------------------------------------------------
 void ofApp::draw()
 {
-    if (m_server_mode || m_frame.empty()) return;
+    if (m_config.isServer() || m_frame.empty()) return;
 
     ofBackground(ofColor::black);
 
@@ -417,4 +413,3 @@ void ofApp::gotMessage(ofMessage msg) {}
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo) {}
-#endif

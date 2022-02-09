@@ -5,7 +5,13 @@
 #include "constants.h"
 #include "ofxOpenCv.h"
 
-class Motion
+class IMotion
+{
+  public:
+    virtual void test() const = 0;
+};
+
+class Motion  //: public IMotion
 {
     const int width = 320;
     const int height = 240;
@@ -17,7 +23,8 @@ class Motion
     Motion()
     {
         // update backgound after 5 frames
-        int frames = 1000 / common::getParams().fps * 5;
+        // V        int frames = 1000 / common::getParams().fps * 5;
+        int frames = 1000 / 15 * 5;
         m_timex_background.setLimit(frames);
 
         // detection per frames
@@ -65,7 +72,7 @@ class Motion
         resize(m_gray, m_gray, Size(width, height));
 
         // im server mode use the lower CPU usage substraction
-        if (common::isServer()) {
+        if (m_config.isServer()) {
             if (!m_first_set) {
                 m_gray.copyTo(m_first);
                 m_first_set = true;
@@ -103,7 +110,7 @@ class Motion
         this->find();
 
         // im server mode use the lower CPU usage substraction
-        if (common::isServer()) {
+        if (m_config.isServer()) {
             if (m_timex_background.elapsed()) {
                 m_gray.copyTo(m_first);
                 m_timex_background.set();

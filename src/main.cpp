@@ -77,19 +77,14 @@ int main(int argc, char* argv[])
         ofSetupOpenGL(width, height, OF_WINDOW);
     }
 
+    Config& m_config = m_config.getInstance();
+    m_config.parameters.camname = camera;
+    m_config.parameters.width = width;
+    m_config.parameters.height = height;
+    m_config.parameters.mode = mode;
+    m_config.parameters.fps = fps;
+
     auto app = std::make_shared<ofApp>();
-
-    return 1;
-
-    // app->setParameters(parser);
-
-    //// TODO create object/struct
-    // app->setCamName(camera);
-    // app->setServerMode(mode);
-    // app->setCamWidth(width);
-    // app->setCamHeight(height);
-    // app->setFps(fps);
-
     ofRunApp(app);
 
     return 0;
