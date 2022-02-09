@@ -7,6 +7,8 @@ namespace common
     string camname;
     int fps = 15;
 
+    bool server_mode = false;
+
     string getElapsedTimeString()
     {
         ostringstream result;
@@ -22,6 +24,10 @@ namespace common
 
     void setFps(int f) { fps = f; }
     int getFps() { return fps; }
+
+    void setMode(int mode) { server_mode = mode == 1; }
+
+    bool isServerMode() { return server_mode; }
 
     void setCamName(const string& cam)
     {

@@ -12,11 +12,15 @@ using namespace std;
 namespace common
 {
     const string& getCamName();
+
+    bool isServerMode();
+
     void setCamName(const string& camname);
     void log(const string& message, ofLogLevel level = OF_LOG_NOTICE);
     void bgr2rgb(cv::Mat& img);
-
+    void setMode(int mode);
     void setFps(int f);
+
     int getFps();
     int getSeconds(const string& t);
     int getHours(const string& t);

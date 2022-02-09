@@ -5,8 +5,6 @@
 #include "constants.h"
 #include "ofxOpenCv.h"
 
-//#define MOG2
-
 class Motion
 {
     const int width = 320;
@@ -66,46 +64,51 @@ class Motion
         convertColor(frame, m_gray, CV_RGB2GRAY);
         resize(m_gray, m_gray, Size(width, height));
 
-#ifndef MOG2
-        if (!m_first_set) {
-            m_gray.copyTo(m_first);
-            m_first_set = true;
+        // im server mode use the lower CPU usage substraction
+        if (common::isServerMode()) {
+            if (!m_first_set) {
+                m_gray.copyTo(m_first);
+                m_first_set = true;
+            }
+
+            m_gray.copyTo(m_second);
+
+            // compute the absolute difference between frames
+            absdiff(m_first, m_second, m_difference);
+
+            threshold(m_difference, m_threshold, m_config.settings.minthreshold, 255,
+                      CV_THRESH_BINARY);
+
+            blur(m_threshold, 20);
+            dilate(m_threshold, 8);
+
+            // copy and add mask
+            m_threshold.copyTo(m_output, m_mask);
+            m_gray.copyTo(m_mask_image, m_mask);
+        } else {
+            // in client mode use the MOG2 sunstraction HIGH CPU usage
+            mog2->apply(m_gray, m_difference);
+
+            blur(m_difference, 20);
+            dilate(m_difference, 8);
+
+            threshold(m_difference, m_threshold, m_config.settings.minthreshold, 255,
+                      CV_THRESH_BINARY);
+
+            // copy and add mask
+            m_threshold.copyTo(m_output, m_mask);
+            m_gray.copyTo(m_mask_image, m_mask);
         }
-
-        m_gray.copyTo(m_second);
-
-        // compute the absolute difference between frames
-        absdiff(m_first, m_second, m_difference);
-
-        threshold(m_difference, m_threshold, m_config.settings.minthreshold, 255, CV_THRESH_BINARY);
-
-        blur(m_threshold, 20);
-        dilate(m_threshold, 8);
-
-        // copy and add mask
-        m_threshold.copyTo(m_output, m_mask);
-        m_gray.copyTo(m_mask_image, m_mask);
-#else
-        mog2->apply(m_gray, m_difference);
-
-        blur(m_difference, 20);
-        dilate(m_difference, 8);
-
-        threshold(m_difference, m_threshold, m_config.settings.minthreshold, 255, CV_THRESH_BINARY);
-
-        // copy and add mask
-        m_threshold.copyTo(m_output, m_mask);
-        m_gray.copyTo(m_mask_image, m_mask);
-#endif
 
         this->find();
 
-#ifndef MOG2
-        if (m_timex_background.elapsed()) {
-            m_gray.copyTo(m_first);
-            m_timex_background.set();
+        // im server mode use the lower CPU usage substraction
+        if (common::isServerMode()) {
+            if (m_timex_background.elapsed()) {
+                m_gray.copyTo(m_first);
+                m_timex_background.set();
+            }
         }
-#endif
     }
 
     ofPolyline& getMaskPolyLine()
