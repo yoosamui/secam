@@ -50,6 +50,7 @@ void ofApp::setCamName(const string& camname)
 void ofApp::setServerMode(int mode)
 {
     m_server_mode = mode == 1;
+    common::setMode(mode);
 }
 
 void ofApp::setCamWidth(int width)
