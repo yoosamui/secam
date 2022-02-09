@@ -4,10 +4,29 @@
 
 namespace common
 {
-    string camname;
-    int fps = 15;
+    Params params;
 
-    bool server_mode = false;
+    bool isServer()
+    {
+        return true;
+
+        //
+        //    return params.mode == 1;
+    }
+
+    // void setParams(CommandLineParser parser)
+    //{
+    // terminate();
+    // params.camname = parser.get<std::string>("camera");
+    //// params.width = parser.get<int>("width");
+    //// params.height = parser.get<int>("height");
+    //// params.mode = parser.get<int>("mode");
+    //// params.fps = parser.get<int>("fps");
+
+    // cout << params.camname << endl;
+    //}
+
+    Params getParams() { return params; }
 
     string getElapsedTimeString()
     {
@@ -22,26 +41,6 @@ namespace common
         return result.str();
     }
 
-    void setFps(int f) { fps = f; }
-    int getFps() { return fps; }
-
-    void setMode(int mode) { server_mode = mode == 1; }
-
-    bool isServerMode() { return server_mode; }
-
-    void setCamName(const string& cam)
-    {
-        // TODO create an object
-
-        camname = cam;
-    }
-
-    const string& getCamName()
-    {
-        //
-        return camname;
-    }
-
     // Log levels are (in order of priority):
     //
     // OF_LOG_VERBOSE
@@ -53,7 +52,7 @@ namespace common
     //
     void log(const string& message, ofLogLevel level)
     {
-        ofLogToFile("data/logs/" + camname + ".log", true);
+        ofLogToFile("data/logs/" + params.camname + ".log", true);
         ofLog(level) << message << endl;
 
         ofLogToConsole();

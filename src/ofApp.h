@@ -10,17 +10,17 @@
 
 using namespace ofxCv;
 using namespace cv;
-
+#define OK
 class ofApp : public ofBaseApp
 {
     enum input_mode_t { none, mask, motion };
     const int VIDEODURATION = 30;
 
   public:
+#ifdef OK
     void setup();
     void update();
     void draw();
-
     void keyPressed(int key);
     void keyReleased(int key);
     void mouseMoved(int x, int y);
@@ -33,11 +33,7 @@ class ofApp : public ofBaseApp
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
 
-    void setCamName(const string& camname);
-    void setServerMode(int mode);
-    void setCamWidth(int width);
-    void setCamHeight(int height);
-    void setFps(int fps);
+    // void setParameters(CommandLineParser parser);
 
   private:
     void check_connection();
@@ -94,4 +90,5 @@ class ofApp : public ofBaseApp
     Motion m_motion;
     Videowriter m_writer;
     ofTrueTypeFont m_font;
+#endif
 };

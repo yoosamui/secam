@@ -12,7 +12,7 @@ namespace bfs = boost::filesystem;
 static const string keys =
     "{ help h   |       | print help message. }"
     "{ camera c |       | load the camera config.cfg file and starts streaming. }"
-    "{ mode m   | 0     | start secam as client = 0 or server = 1  instance.}"
+    "{ mode m   | 0     | start secam as client = 0 or server = 1 instance.}"
     "{ fps  f   | 15    | frame rate.}"
     "{ width w  | 640   | stream width. }"
     "{ height h | 360   | stream height. }";
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     auto mode = parser.get<int>("mode");
     auto fps = parser.get<int>("fps");
 
-    if (fps < 15 || fps > 60) {
+    if (fps < 5 || fps > 60) {
         cout << "invalid fps values." << endl;
         return 1;
     }
@@ -79,12 +79,16 @@ int main(int argc, char* argv[])
 
     auto app = std::make_shared<ofApp>();
 
-    // TODO create object/struct
-    app->setCamName(camera);
-    app->setServerMode(mode);
-    app->setCamWidth(width);
-    app->setCamHeight(height);
-    app->setFps(fps);
+    return 1;
+
+    // app->setParameters(parser);
+
+    //// TODO create object/struct
+    // app->setCamName(camera);
+    // app->setServerMode(mode);
+    // app->setCamWidth(width);
+    // app->setCamHeight(height);
+    // app->setFps(fps);
 
     ofRunApp(app);
 

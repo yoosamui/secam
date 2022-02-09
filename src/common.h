@@ -9,19 +9,24 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
+struct Params {
+    string camname;
+    int width;
+    int height;
+    int mode;
+    int fps;
+};
+
 namespace common
 {
-    const string& getCamName();
+    Params getParams();
 
-    bool isServerMode();
+    bool isServer();
 
-    void setCamName(const string& camname);
+    //  void setParams(CommandLineParser parser);
     void log(const string& message, ofLogLevel level = OF_LOG_NOTICE);
     void bgr2rgb(cv::Mat& img);
-    void setMode(int mode);
-    void setFps(int f);
 
-    int getFps();
     int getSeconds(const string& t);
     int getHours(const string& t);
 

@@ -14,7 +14,7 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = common::getFps() * 6;
+const uint16_t QUEUE_MAX_SIZE = common::getParams().fps * 10;
 
 class Videowriter : public ofThread, public VideoWriter
 {
@@ -29,7 +29,7 @@ class Videowriter : public ofThread, public VideoWriter
         if (!m_processing) {
             // make space for new frames
             if (m_queue.size() > QUEUE_MAX_SIZE) {
-                for (int i = 0; i < common::getFps(); i++) {
+                for (int i = 0; i < common::getParams().fps; i++) {
                     m_queue.pop();
                 }
                 return;
@@ -88,18 +88,18 @@ class Videowriter : public ofThread, public VideoWriter
             int apiID = cv::CAP_FFMPEG;
             int codec = VideoWriter::fourcc('X', '2', '6', '4');
 
-            double fps = common::getFps();
+            double fps = 25;
 
             bool isColor = (src.type() == CV_8UC3);
 
-            string filename = get_filepath(prefix + common::getCamName(), ".mkv");
+            string filename = get_filepath(prefix + common::getParams().camname, ".mkv");
             result = filename;
 
             open(filename, apiID, codec, fps, src.size(), isColor);
 
             // Current quality (0..100%) of the encoded videostream.
             // Can be adjusted dynamically in some codecs.
-            set(VIDEOWRITER_PROP_QUALITY, 100);
+            set(VIDEOWRITER_PROP_QUALITY, 75);
         }
 
         return result;

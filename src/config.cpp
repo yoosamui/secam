@@ -7,13 +7,13 @@
 
 void Config::save()
 {
-    string filename = common::getCamName() + ".xml";
+    string filename = common::getParams().camname + ".xml";
     this->save(filename);
 }
 
 bool Config::load()
 {
-    string filename = common::getCamName() + ".xml";
+    string filename = common::getParams().camname + ".xml";
     return load(filename);
 }
 

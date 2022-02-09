@@ -36,38 +36,13 @@ void ofApp::check_connection()
 }
 
 //--------------------------------------------------------------
-void ofApp::setCamName(const string& camname)
-{
-    m_camname = camname;
-
-    transform(m_camname.begin(), m_camname.end(), m_camname.begin(),
-              [](unsigned char s) { return std::tolower(s); });
-
-    common::setCamName(m_camname);
-}
-
-//--------------------------------------------------------------
-void ofApp::setServerMode(int mode)
-{
-    m_server_mode = mode == 1;
-    common::setMode(mode);
-}
-
-void ofApp::setCamWidth(int width)
-{
-    m_cam_width = width;
-}
-void ofApp::setCamHeight(int height)
-{
-    m_cam_height = height;
-}
-
-void ofApp::setFps(int fps)
-
-{
-    m_fps = fps;
-    common::setFps(fps);
-}
+// void ofApp::setParameters(CommandLineParser parser)
+//{
+////   common::setParameters(parser);
+// terminate();
+//}
+#define ok
+#ifdef ok
 //--------------------------------------------------------------
 void ofApp::setup()
 {
@@ -442,3 +417,4 @@ void ofApp::gotMessage(ofMessage msg) {}
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo) {}
+#endif
