@@ -1,7 +1,6 @@
 
 #pragma once
 
-#define FRAME_RATE 25
 #define TMPDIR "/var/tmp/"
 
 #define CHECK_CONNECTION_SCRIPT "data/scripts/check_connection.sh"

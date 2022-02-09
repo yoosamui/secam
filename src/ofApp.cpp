@@ -60,13 +60,21 @@ void ofApp::setCamHeight(int height)
 {
     m_cam_height = height;
 }
+
+void ofApp::setFps(int fps)
+
+{
+    m_fps = fps;
+    common::setFps(fps);
+}
 //--------------------------------------------------------------
 void ofApp::setup()
 {
     ofLog::setAutoSpace(false);
 
     // set frame rate.
-    ofSetFrameRate(FRAME_RATE);
+    ofSetFrameRate(m_fps);
+
     ofSetVerticalSync(true);
 
     if (!m_config.load()) {
@@ -132,17 +140,17 @@ void ofApp::update()
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty() && m_network) {
+        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_fps - 4;
+        if (m_lowframerate) {
+            common::log(string(ERROR_FRAMELOW) + " " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+            return;
+        }
+
         m_timestamp = common::getTimestamp(m_config.settings.timezone);
         this->drawTimestamp();
 
         // add frame to writer
         m_writer.add(m_frame);
-
-        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < FRAME_RATE - 4;
-        if (m_lowframerate) {
-            common::log(string(ERROR_FRAMELOW) + " " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
-            return;
-        }
 
         if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
             cv::resize(m_frame, m_resized, cv::Size(m_cam_width, m_cam_height));

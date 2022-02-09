@@ -14,7 +14,7 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = FRAME_RATE * 6;
+const uint16_t QUEUE_MAX_SIZE = common::getFps() * 6;
 
 class Videowriter : public ofThread, public VideoWriter
 {
@@ -29,7 +29,7 @@ class Videowriter : public ofThread, public VideoWriter
         if (!m_processing) {
             // make space for new frames
             if (m_queue.size() > QUEUE_MAX_SIZE) {
-                for (int i = 0; i < FRAME_RATE; i++) {
+                for (int i = 0; i < common::getFps(); i++) {
                     m_queue.pop();
                 }
                 return;
@@ -88,7 +88,7 @@ class Videowriter : public ofThread, public VideoWriter
             int apiID = cv::CAP_FFMPEG;
             int codec = VideoWriter::fourcc('X', '2', '6', '4');
 
-            double fps = FRAME_RATE;
+            double fps = common::getFps();
 
             bool isColor = (src.type() == CV_8UC3);
 

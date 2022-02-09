@@ -16,6 +16,8 @@ namespace common
     void log(const string& message, ofLogLevel level = OF_LOG_NOTICE);
     void bgr2rgb(cv::Mat& img);
 
+    void setFps(int f);
+    int getFps();
     int getSeconds(const string& t);
     int getHours(const string& t);
 

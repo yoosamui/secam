@@ -5,6 +5,7 @@
 namespace common
 {
     string camname;
+    int fps = 15;
 
     string getElapsedTimeString()
     {
@@ -18,6 +19,9 @@ namespace common
 
         return result.str();
     }
+
+    void setFps(int f) { fps = f; }
+    int getFps() { return fps; }
 
     void setCamName(const string& cam)
     {
