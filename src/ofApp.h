@@ -20,7 +20,6 @@ class ofApp : public ofBaseApp
     void setup();
     void update();
     void draw();
-
     void keyPressed(int key);
     void keyReleased(int key);
     void mouseMoved(int x, int y);
@@ -33,17 +32,12 @@ class ofApp : public ofBaseApp
     void dragEvent(ofDragInfo dragInfo);
     void gotMessage(ofMessage msg);
 
-    void setCamName(const string& camname);
-    void setServerMode(int mode);
-    void setCamWidth(int width);
-    void setCamHeight(int height);
-    void setFps(int fps);
-
   private:
     void check_connection();
     void drawTimestamp();
     void on_motion(Rect& r);
     void on_motion_detected(Rect& r);
+    void saveDetectionImage();
 
     string& getStatusInfo();
 
@@ -56,7 +50,6 @@ class ofApp : public ofBaseApp
 
     ofPolyline m_detected;
 
-    string m_camname;
     string m_timestamp;
 
     Mat m_frame;
@@ -66,7 +59,6 @@ class ofApp : public ofBaseApp
 
     unsigned long m_frame_number = 0;
 
-    bool m_server_mode = false;
     bool m_thread_processing = true;
     bool m_network = false;
     bool m_processing = false;
@@ -81,7 +73,6 @@ class ofApp : public ofBaseApp
     int m_cam_width = 640;
     int m_cam_height = 360;
     int m_view = 1;
-    int m_fps;
 
     common::Timex m_timex_stoprecording;
     common::Timex m_timex_recording_point;

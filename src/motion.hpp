@@ -5,7 +5,14 @@
 #include "constants.h"
 #include "ofxOpenCv.h"
 
-class Motion
+class IMotion
+{
+  public:
+    virtual void test() = 0;
+    virtual void init() = 0;
+};
+
+class Motion : public IMotion
 {
     const int width = 320;
     const int height = 240;
@@ -17,14 +24,25 @@ class Motion
     Motion()
     {
         // update backgound after 5 frames
-        int frames = 1000 / common::getFps() * 5;
+        int frames = 1000 / m_config.parameters.fps * 5;
+
         m_timex_background.setLimit(frames);
 
         // detection per frames
         m_timex_detections.setLimit(frames);
     }
 
-    void init()
+    void test() override
+    {
+        m_maskPoints = m_config.mask_points;
+
+        if (m_maskPoints.size()) {
+            //
+        }
+        //
+    }
+
+    void init()  // const override
     {
         m_maskPoints = m_config.mask_points;
 
@@ -65,7 +83,7 @@ class Motion
         resize(m_gray, m_gray, Size(width, height));
 
         // im server mode use the lower CPU usage substraction
-        if (common::isServerMode()) {
+        if (m_config.isServer()) {
             if (!m_first_set) {
                 m_gray.copyTo(m_first);
                 m_first_set = true;
@@ -103,7 +121,7 @@ class Motion
         this->find();
 
         // im server mode use the lower CPU usage substraction
-        if (common::isServerMode()) {
+        if (m_config.isServer()) {
             if (m_timex_background.elapsed()) {
                 m_gray.copyTo(m_first);
                 m_timex_background.set();
@@ -183,6 +201,8 @@ class Motion
     Ptr<cv::BackgroundSubtractorMOG2> mog2 = createBackgroundSubtractorMOG2(100, 16, false);
     bool m_first_set = false;
 
+    Config& m_config = m_config.getInstance();
+
     int m_detections_count = 0;
 
     Mat m_frame_view;
@@ -194,8 +214,6 @@ class Motion
     Mat m_mask;
     Mat m_output;
     Mat m_mask_image;
-
-    Config& m_config = m_config.getInstance();
 
     ofPolyline m_polyline;
     ofPolyline m_polyline_scaled;

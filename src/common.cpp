@@ -2,13 +2,10 @@
 
 #include <boost/format.hpp>
 
+#include "config.h"
+
 namespace common
 {
-    string camname;
-    int fps = 15;
-
-    bool server_mode = false;
-
     string getElapsedTimeString()
     {
         ostringstream result;
@@ -22,26 +19,6 @@ namespace common
         return result.str();
     }
 
-    void setFps(int f) { fps = f; }
-    int getFps() { return fps; }
-
-    void setMode(int mode) { server_mode = mode == 1; }
-
-    bool isServerMode() { return server_mode; }
-
-    void setCamName(const string& cam)
-    {
-        // TODO create an object
-
-        camname = cam;
-    }
-
-    const string& getCamName()
-    {
-        //
-        return camname;
-    }
-
     // Log levels are (in order of priority):
     //
     // OF_LOG_VERBOSE
@@ -53,11 +30,8 @@ namespace common
     //
     void log(const string& message, ofLogLevel level)
     {
-        ofLogToFile("data/logs/" + camname + ".log", true);
         ofLog(level) << message << endl;
-
-        ofLogToConsole();
-        ofLog(level) << message << endl;
+        cout << to_string(level) << " : " << message << endl;
     }
 
     string getTimestamp(const string& time_zone, const string& format_string)
