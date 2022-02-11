@@ -8,7 +8,8 @@
 class IMotion
 {
   public:
-    virtual void test() const = 0;
+    virtual void test() = 0;
+    virtual void init() = 0;
 };
 
 class Motion : public IMotion
@@ -23,19 +24,25 @@ class Motion : public IMotion
     Motion()
     {
         // update backgound after 5 frames
-        // V        int frames = 1000 / common::getParams().fps * 5;
-        int frames = 1000 / 15 * 5;
+        int frames = 1000 / m_config.parameters.fps * 5;
+
         m_timex_background.setLimit(frames);
 
         // detection per frames
         m_timex_detections.setLimit(frames);
     }
 
-    void test() const override
+    void test() override
     {
+        m_maskPoints = m_config.mask_points;
+
+        if (m_maskPoints.size()) {
+            //
+        }
         //
     }
-    void init()
+
+    void init()  // const override
     {
         m_maskPoints = m_config.mask_points;
 
@@ -194,6 +201,8 @@ class Motion : public IMotion
     Ptr<cv::BackgroundSubtractorMOG2> mog2 = createBackgroundSubtractorMOG2(100, 16, false);
     bool m_first_set = false;
 
+    Config& m_config = m_config.getInstance();
+
     int m_detections_count = 0;
 
     Mat m_frame_view;
@@ -205,8 +214,6 @@ class Motion : public IMotion
     Mat m_mask;
     Mat m_output;
     Mat m_mask_image;
-
-    Config& m_config = m_config.getInstance();
 
     ofPolyline m_polyline;
     ofPolyline m_polyline_scaled;

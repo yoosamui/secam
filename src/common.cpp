@@ -30,14 +30,8 @@ namespace common
     //
     void log(const string& message, ofLogLevel level)
     {
-        // TODO factory
-        Config& m_config = m_config.getInstance();
-
-        ofLogToFile("data/logs/" + m_config.parameters.camname + ".log", true);
         ofLog(level) << message << endl;
-
-        ofLogToConsole();
-        ofLog(level) << message << endl;
+        cout << to_string(level) << " : " << message << endl;
     }
 
     string getTimestamp(const string& time_zone, const string& format_string)

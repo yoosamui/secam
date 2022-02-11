@@ -14,7 +14,7 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = 100;  // m_config.parameters.fps * 10;
+const uint16_t QUEUE_MAX_SIZE = 100;
 
 class Videowriter : public ofThread, public VideoWriter
 {
@@ -107,7 +107,7 @@ class Videowriter : public ofThread, public VideoWriter
         return result;
     }
 
-    string get_filepath(const string& prefix, const string& extension)
+    string get_filepath(const string& prefix, const string& extension, int ret = 0)
     {
         const string timestamp = common::getTimestamp(m_config.settings.timezone, "%T");
         m_source_dir = m_destination_dir =
@@ -127,7 +127,7 @@ class Videowriter : public ofThread, public VideoWriter
 
         m_file = "/" + timestamp + "_" + prefix + extension;
 
-        return m_source_dir + m_file;
+        return ret == 0 ? m_source_dir + m_file : m_destination_dir + m_file;
     }
 
   private:

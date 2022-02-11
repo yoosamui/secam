@@ -1,11 +1,11 @@
 #include "ofApp.h"
 
-#include <boost/format.hpp>
 #include <iostream>
 #include <thread>
 
 #include "common.h"
 #include "constants.h"
+#include "factory.hpp"
 
 #define ERROR_LOSSCON "C O N N E C T I O N  L O S T"
 #define ERROR_FRAMELOW "F R A M E R A T E  L O W"
@@ -42,9 +42,10 @@ void ofApp::setup()
     ofLog::setAutoSpace(false);
 
     // set frame rate.
-    ofSetFrameRate(m_fps);
-
+    ofSetFrameRate(m_config.parameters.fps);
     ofSetVerticalSync(true);
+
+    ofLogToFile("data/logs/" + m_config.parameters.camname + ".log", false);
 
     if (!m_config.load()) {
         common::log("load Configuration error.", OF_LOG_WARNING);
@@ -52,8 +53,6 @@ void ofApp::setup()
     }
 
     m_checknetwork_thread = this->spawn();
-
-    common::log("PLATFORM: " + ofGetTargetPlatform());
 
     stringstream ss;
 
@@ -69,7 +68,6 @@ void ofApp::setup()
        << "mincontousize =  " << m_config.settings.mincontoursize << "\n"
        << "detectionsmaxcount = " << m_config.settings.detectionsmaxcount << "\n"
        << endl;
-    // << "parameters = " << m_config.parameters << endl;
 
     common::log(ss.str());
 
@@ -105,16 +103,18 @@ void ofApp::update()
         return;
     }
 
-    // 12 frames time to stabilization.
-    if (m_frame_number++ < 12 || !m_processing) return;
+    // 20 frames time to stabilization.
+    if (m_frame_number++ < 20 || !m_processing) return;
 
     // TODO config setting
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty() && m_network) {
-        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_fps - 4;
+        m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
         if (m_lowframerate) {
             common::log(string(ERROR_FRAMELOW) + " " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+            //            m_reconnect = true;
+            m_frame_number = 0;
             return;
         }
 
@@ -137,6 +137,7 @@ void ofApp::update()
         if (m_motion_detected) {
             // create video
             if (!m_recording) {
+                this->saveDetectionImage();
                 // start recording
                 auto m_videofilename = m_writer.start("motion_");
 
@@ -227,7 +228,9 @@ void ofApp::draw()
     ofNoFill();
     ofSetLineWidth(1.5);
     ofSetColor(yellowPrint);
+
     m_detected.draw();
+
     ofPopStyle();
 
     ofPushStyle();
@@ -253,24 +256,22 @@ void ofApp::draw()
 //--------------------------------------------------------------
 string& ofApp::getStatusInfo()
 {
-    ostringstream result;
-    const string f = "FPS/Frame: %2.2f/%.9lu q:%.2ld [ %3d, %3d, %3d, %3d ] [vid:%.2d]";
-
     // clang-format off
 
-     result << boost::format(f)
-            % ofGetFrameRate()
-            % m_frame_number
-            % m_writer.get_queue().size()
-            % m_config.settings.minthreshold
-            % m_config.settings.minrectwidth
-            % m_config.settings.mincontoursize
-            % m_config.settings.detectionsmaxcount
-            % m_recording_duration;
+    char buf[512];
+    sprintf(buf,"FPS/Frame: %2.2f/%.9lu q:%.3ld [ %3d, %3d, %3d, %3d ] [vid:%.2d]",
+             ofGetFrameRate(),
+             m_frame_number,
+             m_writer.get_queue().size(),
+             m_config.settings.minthreshold,
+             m_config.settings.minrectwidth,
+             m_config.settings.mincontoursize,
+             m_config.settings.detectionsmaxcount,
+             m_recording_duration);
 
     // clang-format on
 
-    m_statusinfo = result.str();
+    m_statusinfo = buf;
     return m_statusinfo;
 }
 //--------------------------------------------------------------
@@ -283,7 +284,6 @@ void ofApp::on_motion_detected(Rect& r)
 void ofApp::on_motion(Rect& r)
 {
     m_detected = m_detected.fromRectangle(toOf(r));
-
     if (m_view == 1) {
         float sx = static_cast<float>(m_cam_width * 100 / m_motion.getWidth()) / 100;
         float sy = static_cast<float>(m_cam_height * 100 / m_motion.getHeight()) / 100;
@@ -292,6 +292,26 @@ void ofApp::on_motion(Rect& r)
     }
 }
 
+//--------------------------------------------------------------
+void ofApp::saveDetectionImage()
+{
+    //    cvtColor(m_frame, m_frame, COLOR_BGR2RGB);
+    // common::bgrtorgb(m_frame);
+
+    Mat img;
+    m_frame.copyTo(img);
+    Rect r = toCv(m_detected.getBoundingBox());
+
+    string text = to_string(r.width) + "x" + to_string(r.height);
+
+    cv::putText(img, text, cv::Point(r.x, r.y - 10), cv::FONT_HERSHEY_DUPLEX, 0.5,
+                cv::Scalar(0, 255, 0), 0.5, false);
+
+    string filename = m_writer.get_filepath("motion_" + m_config.parameters.camname, ".jpg", 1);
+    cv::rectangle(img, r, cv::Scalar(0, 0, 255), 2);
+
+    imwrite(filename, img);
+}
 //--------------------------------------------------------------
 void ofApp::drawTimestamp()
 {
