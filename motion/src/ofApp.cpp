@@ -7,36 +7,7 @@
 #include "constants.h"
 #include "factory.hpp"
 
-#define ERROR_LOSSCON "C O N N E C T I O N  L O S T"
-#define ERROR_FRAMELOW "F R A M E R A T E  L O W"
-
 //--------------------------------------------------------------
-void ofApp::check_connection()
-{
-    string status, path;
-    while (m_thread_processing) {
-        path = string(CHECK_CONNECTION_SCRIPT);
-
-        string host = m_config.settings.host;
-        string port = to_string(m_config.settings.port);
-        string cmd = path + " " + host + " " + port;
-
-        status = common::exec(cmd.c_str());
-        //        status = ofSystem(cmd.c_str());
-
-        m_network = status == "1" ? true : false;
-
-        if (!m_network) {
-            common::log(ERROR_LOSSCON, OF_LOG_WARNING);
-            m_reconnect = true;
-        }
-
-        ofSleepMillis(10000);
-    }
-}
-
-//--------------------------------------------------------------
-
 void ofApp::setup()
 {
     ofLog::setAutoSpace(false);
@@ -51,8 +22,6 @@ void ofApp::setup()
         common::log("load Configuration error.", OF_LOG_WARNING);
         terminate();
     }
-
-    m_checknetwork_thread = this->spawn();
 
     stringstream ss;
 
@@ -92,27 +61,36 @@ void ofApp::setup()
 //--------------------------------------------------------------
 void ofApp::update()
 {
+    if (!m_connected) {
+        m_connected = m_cam.open(m_config.settings.uri, CAP_FFMPEG);
+
+        common::log((m_connected ? "connected" : "lost connection."));
+
+        if (!m_connected) {
+            ofSleepMillis(1000);
+            return;
+        }
+    }
+
     m_cam >> m_frame;
 
-    if (!m_network || !m_cam.isOpened() || m_reconnect || m_frame.empty()) {
-        m_frame_number = 0;
-        while (!m_cam.connect()) {
-            ;
-        }
-        if (m_network) m_reconnect = false;
+    if (!m_cam.isOpened() || m_frame.empty()) {
+        m_connected = false;
+
+        cout << "EMPTY" << endl;
         return;
     }
 
-    // 20 frames time to stabilization.
-    if (m_frame_number++ < 20 || !m_processing) return;
+    // 15 frames time to stabilization.
+    if (m_frame_number++ < 15 || !m_processing) return;
 
     // TODO config setting
     common::bgr2rgb(m_frame);
 
-    if (!m_frame.empty() && m_network) {
+    if (!m_frame.empty()) {
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
         if (m_lowframerate) {
-            common::log(string(ERROR_FRAMELOW) + " " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
+            common::log("low frame rate " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
             //            m_reconnect = true;
             m_frame_number = 0;
             return;
@@ -209,7 +187,6 @@ void ofApp::update()
         }
     }
 }
-
 //--------------------------------------------------------------
 void ofApp::draw()
 {

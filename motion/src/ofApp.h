@@ -34,20 +34,12 @@ class ofApp : public ofBaseApp
     void gotMessage(ofMessage msg);
 
   private:
-    void check_connection();
     void drawTimestamp();
     void on_motion(Rect& r);
     void on_motion_detected(Rect& r);
     void saveDetectionImage();
 
     string& getStatusInfo();
-
-    thread spawn()
-    {
-        return thread([this] { this->check_connection(); });
-    }
-
-    thread m_checknetwork_thread;
 
     ofPolyline m_detected;
 
@@ -62,7 +54,6 @@ class ofApp : public ofBaseApp
     unsigned long m_frame_number = 0;
 
     bool m_thread_processing = true;
-    bool m_network = false;
     bool m_processing = false;
     bool m_lowframerate = false;
     bool m_reconnect = false;
@@ -70,6 +61,7 @@ class ofApp : public ofBaseApp
     bool m_recording = false;
     bool m_manual_recording = false;
     bool m_draw_mask_poly = false;
+    bool m_connected = false;
 
     int m_recording_duration = VIDEODURATION;
     int m_cam_width = 640;
