@@ -138,12 +138,19 @@ void ofApp::update()
             // create video
             if (!m_recording) {
                 this->saveDetectionImage();
-                // start recording
-                auto m_videofilename = m_writer.start("motion_");
 
-                stringstream ss;
-                ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
-                common::log(ss.str());
+                // start recording
+                if (m_dbusclient.server_alive()) {
+                    m_ticket = m_dbusclient.start_recording();
+                    common::log("recording: " + m_ticket);
+
+                } else {
+                    auto m_videofilename = m_writer.start("motion_");
+
+                    stringstream ss;
+                    ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+                    common::log(ss.str());
+                }
 
                 ofResetElapsedTimeCounter();
                 m_recording = true;
@@ -158,11 +165,17 @@ void ofApp::update()
             m_manual_recording = false;
 
             // start recording
-            auto m_videofilename = m_writer.start("recording_");
+            if (m_dbusclient.server_alive()) {
+                m_ticket = m_dbusclient.start_recording();
+                common::log("recording: " + m_ticket);
 
-            stringstream ss;
-            ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
-            common::log(ss.str());
+            } else {
+                auto m_videofilename = m_writer.start("recording_");
+
+                stringstream ss;
+                ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+                common::log(ss.str());
+            }
 
             ofResetElapsedTimeCounter();
             m_recording = true;
@@ -178,11 +191,18 @@ void ofApp::update()
             }
 
             if (m_timex_stoprecording.elapsed()) {
-                if (m_writer.stop()) {
-                    common::log("Recording finish.");
-                    m_recording_duration = VIDEODURATION;
-                    m_recording = false;
+                if (m_dbusclient.server_alive()) {
+                    // dbus
+                    m_dbusclient.stop_recording(m_ticket);
+                } else {
+                    //
+                    m_writer.stop();
                 }
+
+                common::log("Recording finish.");
+
+                m_recording_duration = VIDEODURATION;
+                m_recording = false;
 
                 m_timex_stoprecording.set();
             }

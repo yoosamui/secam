@@ -2,6 +2,7 @@
 
 #include "camera.hpp"
 #include "config.h"
+#include "dbusclient.h"
 #include "motion.hpp"
 #include "ofMain.h"
 #include "ofxCv.h"
@@ -56,6 +57,7 @@ class ofApp : public ofBaseApp
     Mat m_resized;
 
     string m_statusinfo;
+    string m_ticket;
 
     unsigned long m_frame_number = 0;
 
@@ -85,4 +87,5 @@ class ofApp : public ofBaseApp
     Motion m_motion;
     Videowriter m_writer;
     ofTrueTypeFont m_font;
+    Dbusclient m_dbusclient;
 };
