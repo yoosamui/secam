@@ -56,8 +56,8 @@ class Videowriter : public ofThread, public VideoWriter
                 boost::filesystem::copy(s, d);
                 boost::filesystem::remove(s);
 
-                boost::filesystem::recursive_directory_iterator it(m_source_dir);
-                boost::filesystem::recursive_directory_iterator itEnd;
+                // boost::filesystem::recursive_directory_iterator it(m_source_dir);
+                // boost::filesystem::recursive_directory_iterator itEnd;
 
                 // remove empty folder.
                 if (boost::filesystem::is_empty(m_source_dir)) {
@@ -101,7 +101,7 @@ class Videowriter : public ofThread, public VideoWriter
 
             // Current quality (0..100%) of the encoded videostream.
             // Can be adjusted dynamically in some codecs.
-            set(VIDEOWRITER_PROP_QUALITY, 75);
+            set(VIDEOWRITER_PROP_QUALITY, 80);
         }
 
         return result;

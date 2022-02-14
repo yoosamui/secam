@@ -13,7 +13,7 @@ static const string keys =
     "{ help h   |       | print help message. }"
     "{ camera c |       | load the camera config.cfg file and starts streaming. }"
     "{ mode m   | 0     | start secam as client = 0 or server = 1 instance.}"
-    "{ fps  f   | 15    | frame rate.}"
+    "{ fps  f   | 25    | frame rate.}"
     "{ width x  | 640   | stream width. }"
     "{ height y | 360   | stream height. }";
 

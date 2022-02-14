@@ -37,15 +37,15 @@ namespace common
     string getTimestamp(const string& time_zone, const string& format_string)
     {
         time_t t = time(nullptr);
-        char buf[64];
+        char buf[32];
 
         sprintf(buf, "TZ=%s", time_zone.c_str());
-        putenv(buf);
+        setenv("TZ", time_zone.c_str(), 1);
 
         strftime(buf, sizeof buf, format_string.c_str(), localtime(&t));
-        string timestamp(buf);
+        unsetenv("TZ");
 
-        return timestamp;
+        return buf;
     }
 
     /*

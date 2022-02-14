@@ -119,17 +119,16 @@ void ofApp::update()
                 this->saveDetectionImage();
 
                 // start recording
-                if (m_dbusclient.server_alive()) {
-                    m_ticket = m_dbusclient.start_recording();
-                    common::log("recording: " + m_ticket);
+                // if (m_dbusclient.server_alive()) {
+                // m_ticket = m_dbusclient.start_recording();
+                // common::log("recording: " + m_ticket);
 
-                } else {
-                    auto m_videofilename = m_writer.start("motion_");
+                //} else {
+                auto m_videofilename = m_writer.start("motion_");
 
-                    stringstream ss;
-                    ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
-                    common::log(ss.str());
-                }
+                stringstream ss;
+                ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+                common::log(ss.str());
 
                 ofResetElapsedTimeCounter();
                 m_recording = true;
@@ -144,17 +143,17 @@ void ofApp::update()
             m_manual_recording = false;
 
             // start recording
-            if (m_dbusclient.server_alive()) {
-                m_ticket = m_dbusclient.start_recording();
-                common::log("recording: " + m_ticket);
+            // if (m_dbusclient.server_alive()) {
+            // m_ticket = m_dbusclient.start_recording();
+            // common::log("recording: " + m_ticket);
 
-            } else {
-                auto m_videofilename = m_writer.start("recording_");
+            //} else {
 
-                stringstream ss;
-                ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
-                common::log(ss.str());
-            }
+            auto m_videofilename = m_writer.start("recording_");
+
+            stringstream ss;
+            ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+            common::log(ss.str());
 
             ofResetElapsedTimeCounter();
             m_recording = true;
@@ -170,13 +169,12 @@ void ofApp::update()
             }
 
             if (m_timex_stoprecording.elapsed()) {
-                if (m_dbusclient.server_alive()) {
-                    // dbus
-                    m_dbusclient.stop_recording(m_ticket);
-                } else {
-                    //
-                    m_writer.stop();
-                }
+                // if (m_dbusclient.server_alive()) {
+                //// dbus
+                // m_dbusclient.stop_recording(m_ticket);
+                //} else {
+                //
+                m_writer.stop();
 
                 common::log("Recording finish.");
 
@@ -202,11 +200,18 @@ void ofApp::draw()
 
             break;
 
-        case 2:
+        case 2: {
             drawMat(m_motion.getFrame(), 0, 0);
             m_motion.getMaskPolyLine().draw();
 
-            break;
+            int centerx = (m_motion.getWidth() / 2) - (m_config.settings.minrectwidth / 2);
+            int centery = (m_motion.getHeight() / 2) - (m_config.settings.minrectwidth / 2);
+
+            Rect r(centerx, centery, m_config.settings.minrectwidth,
+                   m_config.settings.minrectwidth);
+
+            ofDrawRectangle(r.x, r.y, r.width, r.height);
+        } break;
 
         case 3:
             drawMat(m_motion.getMaskImage(), 0, 0);
@@ -276,6 +281,15 @@ string& ofApp::getStatusInfo()
 void ofApp::on_motion_detected(Rect& r)
 {
     m_motion_detected = true;
+    m_motion_detected_poly = m_detected.fromRectangle(toOf(r));
+
+    // float sx = static_cast<float>(m_frame.cols * 100 / m_motion.getWidth()) / 100;
+    // float sy = static_cast<float>(m_frame.rows * 100 / m_motion.getHeight()) / 100;
+
+    // auto poly = ofPolyline::fromRectangle(toOf(r));
+    // poly.scale(sx, sy);
+
+    // m_motion_detected_rect = toCv(poly.getBoundingBox());
 }
 
 //--------------------------------------------------------------
@@ -293,12 +307,17 @@ void ofApp::on_motion(Rect& r)
 //--------------------------------------------------------------
 void ofApp::saveDetectionImage()
 {
-    //    cvtColor(m_frame, m_frame, COLOR_BGR2RGB);
-    // common::bgrtorgb(m_frame);
+    float sx = static_cast<float>(m_frame.cols * 100 / m_motion.getWidth()) / 100;
+    float sy = static_cast<float>(m_frame.rows * 100 / m_motion.getHeight()) / 100;
+
+    m_motion_detected_poly.scale(sx, sy);
+    m_motion_detected_rect = toCv(m_motion_detected_poly.getBoundingBox());
 
     Mat img;
     m_frame.copyTo(img);
-    Rect r = toCv(m_detected.getBoundingBox());
+    common::bgr2rgb(img);
+
+    Rect r(m_motion_detected_rect);
 
     string text = to_string(r.width) + "x" + to_string(r.height);
 

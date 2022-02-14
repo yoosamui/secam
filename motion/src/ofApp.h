@@ -42,6 +42,9 @@ class ofApp : public ofBaseApp
     string& getStatusInfo();
 
     ofPolyline m_detected;
+    ofPolyline m_motion_detected_poly;
+
+    Rect m_motion_detected_rect;
 
     string m_timestamp;
 
