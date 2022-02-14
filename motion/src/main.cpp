@@ -13,9 +13,9 @@ static const string keys =
     "{ help h   |       | print help message. }"
     "{ camera c |       | load the camera config.cfg file and starts streaming. }"
     "{ mode m   | 0     | start secam as client = 0 or server = 1 instance.}"
-    "{ fps  f   | 25    | frame rate.}"
-    "{ width w  | 640   | stream width. }"
-    "{ height h | 360   | stream height. }";
+    "{ fps  f   | 15    | frame rate.}"
+    "{ width x  | 640   | stream width. }"
+    "{ height y | 360   | stream height. }";
 
 int main(int argc, char* argv[])
 {
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
         ofSetupOpenGL(&window, width, height, OF_WINDOW);
         cout << "start secam as server." << endl;
     } else {
-        ofSetupOpenGL(width, height, OF_WINDOW);
+        ofSetupOpenGL(width, height + 18, OF_WINDOW);
     }
 
     Config& m_config = m_config.getInstance();

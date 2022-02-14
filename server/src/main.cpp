@@ -98,6 +98,8 @@ namespace
         std::cout << "request: " << method_name << std::endl;
 
         if (method_name == "start") {
+            ofLog() << "Begin Method start" << endl;
+
             auto writer = std::make_shared<Videowriter>();
             ofAddListener(writer->on_completed, &on_completed);
 
@@ -126,8 +128,11 @@ namespace
                 Glib::VariantContainerBase::create_tuple(ticket_var);
 
             invocation->return_value(response);
+            ofLog() << "End Method start" << endl;
 
         } else if (method_name == "stop") {
+            ofLog() << "Begin Method stop" << endl;
+
             Glib::Variant<Glib::ustring> param;
             parameters.get_child(param, 0);
             auto ticket = param.get();
@@ -142,7 +147,11 @@ namespace
                 cout << "stop thread ticket: " << ticket << " size: " << threads.size() << endl;
             }
 
+            ofLog() << "End Method stop" << endl;
+
         } else if (method_name == "GetTime") {
+            ofLog() << "Begin Method GetTime" << endl;
+
             Glib::DateTime curr_time = Glib::DateTime::create_now_local();
 
             const Glib::ustring time_str = curr_time.format_iso8601();
@@ -154,6 +163,7 @@ namespace
 
             // Return the tuple with the included time.
             invocation->return_value(response);
+            ofLog() << "End Method GetTime" << endl;
 
         } else {
             // Non-existent method on the interface.
@@ -198,6 +208,8 @@ namespace
 }  // namespace
 int main()
 {
+    ofLogToFile("data/logs/server.log", false);
+
     std::locale::global(std::locale(""));
     Gio::init();
 
@@ -215,8 +227,6 @@ int main()
         sigc::ptr_fun(&on_name_acquired),
         sigc::ptr_fun(&on_name_lost));
     // clang-format on
-
-    //    m_writer.startThread();
 
     auto loop = Glib::MainLoop::create();
     loop->run();

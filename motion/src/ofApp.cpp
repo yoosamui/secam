@@ -10,6 +10,9 @@
 //--------------------------------------------------------------
 void ofApp::setup()
 {
+    m_cam_width = m_config.parameters.width;
+    m_cam_height = m_config.parameters.height;
+
     ofLog::setAutoSpace(false);
 
     // set frame rate.
@@ -76,8 +79,6 @@ void ofApp::update()
 
     if (!m_cam.isOpened() || m_frame.empty()) {
         m_connected = false;
-
-        cout << "EMPTY" << endl;
         return;
     }
 
@@ -231,18 +232,18 @@ void ofApp::draw()
     ofPopStyle();
 
     ofPushStyle();
-    m_font.drawString(getStatusInfo(), 1, m_cam_height - 6);
+    m_font.drawString(getStatusInfo(), 1, m_cam_height + 12);
     ofPopStyle();
 
     ofPushStyle();
     if (m_recording) {
         ofSetColor(ofColor::white);
         m_font.drawString("REC: " + common::getElapsedTimeString(), m_cam_width - 100,
-                          m_cam_height - 6);
+                          m_cam_height + 12);
 
         if (m_timex_recording_point.elapsed()) {
             ofSetColor(ofColor::red);
-            ofDrawCircle(m_cam_width - 110, m_cam_height - 11, 6);
+            ofDrawCircle(m_cam_width - 110, m_cam_height + 7, 6);
 
             m_timex_recording_point.set();
         }
@@ -256,7 +257,7 @@ string& ofApp::getStatusInfo()
     // clang-format off
 
     char buf[512];
-    sprintf(buf,"FPS/Frame: %2.2f/%.9lu q:%.3ld [ %3d, %3d, %3d, %3d ] [vid:%.2d]",
+    sprintf(buf,"FPS/Frame: %2.2f / %lu q:%.3ld [ %3d, %3d, %3d, %3d ] v:%2d",
              ofGetFrameRate(),
              m_frame_number,
              m_writer.get_queue().size(),
