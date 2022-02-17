@@ -4,19 +4,19 @@
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
-#include "videowriter.hpp"
+#include "streamer.hpp"
 
 using namespace ofxCv;
 using namespace cv;
 
 namespace
 {
-    Videowriter m_writer;
+    Streamer m_writer;
     Glib::ustring m_uri;
     Glib::ustring m_source_dir;
     Glib::ustring m_destination_dir;
 
-    std::map<Glib::ustring, shared_ptr<Videowriter>> threads;
+    std::map<Glib::ustring, shared_ptr<Streamer>> threads;
     guint registered_id = 0;
 
     // Stores the current alarm.
@@ -24,8 +24,8 @@ namespace
 
     static Glib::RefPtr<Gio::DBus::NodeInfo> introspection_data;
     static Glib::ustring introspection_xml =
-        "<node name='/org/yoo/recorder'>"
-        "  <interface name='org.yoo.recorder'>"
+        "<node name='/org/yoo/secam/server'>"
+        "  <interface name='org.yoo.secam.server'>"
         "    <method name='start'>"
         "      <arg name='uri' type='s' direction='in'/>"
         "      <arg name='source' type='s' direction='in'/>"
@@ -42,49 +42,16 @@ namespace
         "  </interface>"
         "</node>";
 
-    // void streaming(Glib::ustring ticket)
-    //{
-    // cv::Mat frame;
-    // VideoCapture cap;
-
-    // cout << "start ticket : " << static_cast<std::string>(ticket) << endl;
-    // while (true) {
-    //// if (!m_init_set) {
-    //// ofSleepMillis(1000);
-    //// continue;
-    ////}
-
-    // while (!cap.isOpened()) {
-    // if (!cap.open(m_uri, CAP_FFMPEG)) cout << "connecting .." << endl;
-
-    // ofSleepMillis(1000);
-    //}
-
-    // cap >> frame;
-    // if (frame.empty()) continue;
-
-    ////     m_writer.add(frame);
-
-    // ofSleepMillis(1);
-    //}
-    //}
-
-    // thread spawn(Glib::ustring ticket)
-    //{
-    ////
-    // return thread([&] { streaming(ticket); });
-    //}
-    //    void on_completed(Glib::ustring& ticket) { dispose(ticket); }
-
     void on_completed(Glib::ustring& ticket)
     {
         if (threads.count(ticket) == 0) return;
 
-        // stop writer thread
-        auto writer = threads[ticket];
-        ofRemoveListener(writer->on_completed, &on_completed);
+        auto streamer = threads[ticket];
+        streamer->stop();
 
-        writer->stop();
+        ofRemoveListener(streamer->on_completed, &on_completed);
+
+        cout << "stop thread: " << ticket << " size: " << threads.size() << endl;
     }
 
     static void on_method_call(const Glib::RefPtr<Gio::DBus::Connection>& /* connection */,
@@ -98,41 +65,36 @@ namespace
         std::cout << "request: " << method_name << std::endl;
 
         if (method_name == "start") {
-            ofLog() << "Begin Method start" << endl;
-
-            auto writer = std::make_shared<Videowriter>();
-            ofAddListener(writer->on_completed, &on_completed);
+            auto streamer = std::make_shared<Streamer>();
+            ofAddListener(streamer->on_completed, &on_completed);
 
             Glib::Variant<Glib::ustring> param;
             parameters.get_child(param, 0);
-            writer->m_uri = param.get();
+            streamer->m_uri = param.get();
 
             parameters.get_child(param, 1);
-            writer->m_temp_dir = param.get();
+            streamer->m_temp_dir = param.get();
 
             parameters.get_child(param, 2);
-            writer->m_storage = param.get();
+            streamer->m_storage = param.get();
 
             parameters.get_child(param, 3);
-            writer->m_title = param.get();
+            streamer->m_title = param.get();
 
             const Glib::ustring ticket = to_string(getTickCount());
             const auto ticket_var = Glib::Variant<Glib::ustring>::create(ticket);
 
-            threads[ticket] = writer;
+            threads[ticket] = streamer;
 
-            writer->m_ticket = ticket;
-            writer->start();
+            streamer->m_ticket = ticket;
+            streamer->start();
 
             Glib::VariantContainerBase response =
                 Glib::VariantContainerBase::create_tuple(ticket_var);
 
             invocation->return_value(response);
-            ofLog() << "End Method start" << endl;
 
         } else if (method_name == "stop") {
-            ofLog() << "Begin Method stop" << endl;
-
             Glib::Variant<Glib::ustring> param;
             parameters.get_child(param, 0);
             auto ticket = param.get();
@@ -140,18 +102,14 @@ namespace
             if (threads.count(ticket) != 0) {
                 on_completed(ticket);
 
-                // delete item & free writer
+                // delete item & free streamer
                 threads[ticket] = nullptr;
                 threads.erase(ticket);
 
-                cout << "stop thread ticket: " << ticket << " size: " << threads.size() << endl;
+                cout << "remove thread: " << ticket << " size: " << threads.size() << endl;
             }
 
-            ofLog() << "End Method stop" << endl;
-
         } else if (method_name == "GetTime") {
-            ofLog() << "Begin Method GetTime" << endl;
-
             Glib::DateTime curr_time = Glib::DateTime::create_now_local();
 
             const Glib::ustring time_str = curr_time.format_iso8601();
@@ -176,12 +134,10 @@ namespace
     void on_bus_acquired(const Glib::RefPtr<Gio::DBus::Connection>& connection,
                          const Glib::ustring& /* name */)
     {
-        std::cout << "on_bus_acquired" << endl;
-
         try {
             // clang-format off
             registered_id = connection->register_object(
-                "/org/yoo/recorder",
+                "/org/yoo/secam/server",
                 introspection_data->lookup_interface(),
                 interface_vtable);
             // clang-format on
@@ -222,7 +178,7 @@ int main()
 
     // clang-format off
     const guint id = Gio::DBus::own_name(
-        Gio::DBus::BUS_TYPE_SESSION,"org.yoo.recorder",
+        Gio::DBus::BUS_TYPE_SESSION,"org.yoo.secam.server",
         sigc::ptr_fun(&on_bus_acquired),
         sigc::ptr_fun(&on_name_acquired),
         sigc::ptr_fun(&on_name_lost));

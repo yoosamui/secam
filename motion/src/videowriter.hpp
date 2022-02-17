@@ -53,8 +53,10 @@ class Videowriter : public ofThread, public VideoWriter
             const string d = m_destination_dir + m_file;
 
             try {
-                boost::filesystem::copy(s, d);
-                boost::filesystem::remove(s);
+                if (boost::filesystem::exists(s)) {
+                    boost::filesystem::copy(s, d);
+                    boost::filesystem::remove(s);
+                }
 
                 // boost::filesystem::recursive_directory_iterator it(m_source_dir);
                 // boost::filesystem::recursive_directory_iterator itEnd;

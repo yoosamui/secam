@@ -261,7 +261,6 @@ class Motion : public IMotion
                 m_contour_finder.size() >= (size_t)m_config.settings.mincontoursize &&
                 m_detections_count >= m_config.settings.detectionsmaxcount) {
 
-                common::log("motion detected: " +to_string(m_detections_count)+" w " + to_string(m_max_rect.width));
 
                 // TODO crate a detection obj
                 ofNotifyEvent(on_motion_detected, m_max_rect, this);

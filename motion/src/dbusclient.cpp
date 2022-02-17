@@ -38,9 +38,9 @@ const string& Dbusclient::getDate()
     // Create the proxy to the bus asynchronously.
     // clang-format off
     Gio::DBus::Proxy::create(connection,
-        "org.yoo.recorder",
-        "/org/yoo/recorder",
-        "org.yoo.recorder", sigc::ptr_fun(&on_dbus_proxy_GetDate));
+        "org.yoo.secam.server",
+        "/org/yoo/secam/server",
+        "org.yoo.secam.server", sigc::ptr_fun(&on_dbus_proxy_GetDate));
 
     // clang-format on
 
@@ -48,7 +48,7 @@ const string& Dbusclient::getDate()
     return m_date;
 }
 
-const string& Dbusclient::start_recording()
+const string& Dbusclient::start_stream()
 {
     m_ticket = "";
     std::locale::global(std::locale(""));
@@ -67,9 +67,9 @@ const string& Dbusclient::start_recording()
     // Create the proxy to the bus asynchronously.
     // clang-format off
     Gio::DBus::Proxy::create(connection,
-        "org.yoo.recorder",
-        "/org/yoo/recorder",
-        "org.yoo.recorder", sigc::ptr_fun(&on_dbus_proxy_start_recording));
+        "org.yoo.secam.server",
+        "/org/yoo/secam/server",
+        "org.yoo.secam.server", sigc::ptr_fun(&on_dbus_proxy_start_stream));
 
     // clang-format on
 
@@ -77,7 +77,7 @@ const string& Dbusclient::start_recording()
     return m_ticket;
 }
 
-void Dbusclient::stop_recording(const string& ticket)
+void Dbusclient::stop_stream(const string& ticket)
 {
     m_ticket = ticket;
     std::locale::global(std::locale(""));
@@ -96,9 +96,9 @@ void Dbusclient::stop_recording(const string& ticket)
     // Create the proxy to the bus asynchronously.
     // clang-format off
     Gio::DBus::Proxy::create(connection,
-        "org.yoo.recorder",
-        "/org/yoo/recorder",
-        "org.yoo.recorder", sigc::ptr_fun(&on_dbus_proxy_stop_recording));
+        "org.yoo.secam.server",
+        "/org/yoo/secam/server",
+        "org.yoo.secam.server", sigc::ptr_fun(&on_dbus_proxy_stop_stream));
 
     // clang-format on
 
@@ -134,7 +134,7 @@ void Dbusclient::on_dbus_proxy_GetDate(Glib::RefPtr<Gio::AsyncResult>& result)
     Glib::signal_idle().connect(sigc::ptr_fun(&on_main_loop_idle));
 }
 
-void Dbusclient::on_dbus_proxy_start_recording(Glib::RefPtr<Gio::AsyncResult>& result)
+void Dbusclient::on_dbus_proxy_start_stream(Glib::RefPtr<Gio::AsyncResult>& result)
 {
     auto proxy = Gio::DBus::Proxy::create_finish(result);
 
@@ -154,7 +154,7 @@ void Dbusclient::on_dbus_proxy_start_recording(Glib::RefPtr<Gio::AsyncResult>& r
         args.push_back(Glib::Variant<Glib::ustring>::create(string(TMPDIR)));
         args.push_back(Glib::Variant<Glib::ustring>::create(m_config.settings.storage));
         args.push_back(
-            Glib::Variant<Glib::ustring>::create("motion_" + m_config.parameters.camname));
+            Glib::Variant<Glib::ustring>::create("OBJ-DETECTION_" + m_config.parameters.camname));
 
         const auto init_result =
             proxy->call_sync("start", Glib::VariantContainerBase::create_tuple(args));
@@ -173,7 +173,7 @@ void Dbusclient::on_dbus_proxy_start_recording(Glib::RefPtr<Gio::AsyncResult>& r
     Glib::signal_idle().connect(sigc::ptr_fun(&on_main_loop_idle));
 }
 
-void Dbusclient::on_dbus_proxy_stop_recording(Glib::RefPtr<Gio::AsyncResult>& result)
+void Dbusclient::on_dbus_proxy_stop_stream(Glib::RefPtr<Gio::AsyncResult>& result)
 {
     auto proxy = Gio::DBus::Proxy::create_finish(result);
 

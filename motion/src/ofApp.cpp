@@ -48,11 +48,12 @@ void ofApp::setup()
     ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
 
     // recording stop timex
-    m_timex_stoprecording.setLimit(30000);
+    m_timex_stoprecording.setLimit(10000);
     m_timex_second.setLimit(1000);
     m_timex_recording_point.setLimit(1000);
 
     m_writer.startThread();
+    m_detector.startThread();
 
     ofSetWindowTitle("CAM-" + m_config.parameters.camname + " / " + m_config.settings.timezone);
 
@@ -75,9 +76,7 @@ void ofApp::update()
         }
     }
 
-    m_cam >> m_frame;
-
-    if (!m_cam.isOpened() || m_frame.empty()) {
+    if (!m_cam.read(m_frame)) {
         m_connected = false;
         return;
     }
@@ -118,12 +117,8 @@ void ofApp::update()
             if (!m_recording) {
                 this->saveDetectionImage();
 
-                // start recording
-                // if (m_dbusclient.server_alive()) {
-                // m_ticket = m_dbusclient.start_recording();
-                // common::log("recording: " + m_ticket);
+                m_detector.start();
 
-                //} else {
                 auto m_videofilename = m_writer.start("motion_");
 
                 stringstream ss;
@@ -134,6 +129,9 @@ void ofApp::update()
                 m_recording = true;
             }
 
+            // common::log("motion detected: " +to_string(m_detections_count)+" w " +
+            // to_string(m_max_rect.width));
+            common::log("motion detected! ");
             m_recording_duration = VIDEODURATION;
             m_timex_stoprecording.reset();
 
@@ -143,12 +141,6 @@ void ofApp::update()
             m_manual_recording = false;
 
             // start recording
-            // if (m_dbusclient.server_alive()) {
-            // m_ticket = m_dbusclient.start_recording();
-            // common::log("recording: " + m_ticket);
-
-            //} else {
-
             auto m_videofilename = m_writer.start("recording_");
 
             stringstream ss;
@@ -169,14 +161,10 @@ void ofApp::update()
             }
 
             if (m_timex_stoprecording.elapsed()) {
-                // if (m_dbusclient.server_alive()) {
-                //// dbus
-                // m_dbusclient.stop_recording(m_ticket);
-                //} else {
-                //
                 m_writer.stop();
-
                 common::log("Recording finish.");
+
+                m_detector.detect();
 
                 m_recording_duration = VIDEODURATION;
                 m_recording = false;
@@ -283,13 +271,7 @@ void ofApp::on_motion_detected(Rect& r)
     m_motion_detected = true;
     m_motion_detected_poly = m_detected.fromRectangle(toOf(r));
 
-    // float sx = static_cast<float>(m_frame.cols * 100 / m_motion.getWidth()) / 100;
-    // float sy = static_cast<float>(m_frame.rows * 100 / m_motion.getHeight()) / 100;
-
-    // auto poly = ofPolyline::fromRectangle(toOf(r));
-    // poly.scale(sx, sy);
-
-    // m_motion_detected_rect = toCv(poly.getBoundingBox());
+    m_detector.add(m_frame, r);
 }
 
 //--------------------------------------------------------------

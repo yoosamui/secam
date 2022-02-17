@@ -4,6 +4,7 @@
 #include "config.h"
 #include "dbusclient.h"
 #include "motion.hpp"
+#include "objectdetector.hpp"
 #include "ofMain.h"
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
@@ -80,7 +81,10 @@ class ofApp : public ofBaseApp
     Config& m_config = m_config.getInstance();
     Camera m_cam;
     Motion m_motion;
+
     Videowriter m_writer;
+    Objectdetector m_detector;
+
     ofTrueTypeFont m_font;
     Dbusclient m_dbusclient;
 };
