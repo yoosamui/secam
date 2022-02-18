@@ -27,8 +27,8 @@ class Objectdetector : public ofThread
     const float NMS_THRESHOLD = 0.4;
     const float CONFIDENCE_THRESHOLD = 0.5;
 
-    const int TILE_SIZE = 213;
-    const string m_title = "person_detected";
+    const int TILE_SIZE = 320;  // 213;
+    const string m_title = "PERSON_";
 
     struct Detection {
         int class_id;
@@ -62,11 +62,13 @@ class Objectdetector : public ofThread
 
     bool m_first_set = false;
     float m_sx = 0, m_sy = 0;
-    int m_frame_number = 0;
+    long m_frame_number = 0;
     int m_idx = 0;
     void add(const Mat &img, const Rect &r)
     {
-        if (++m_frame_number % 2) return;
+        if (++m_frame_number % 2 || img.empty() || !m_processing ||
+            m_frames_map.size() >= QUEUE_MAX_SIZE)
+            return;
 
         if (!m_first_set) {
             m_first_set = true;
@@ -77,6 +79,7 @@ class Objectdetector : public ofThread
 
         Mat rgb;
         img.copyTo(rgb);
+
         common::bgr2rgb(rgb);
 
         ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
@@ -86,7 +89,8 @@ class Objectdetector : public ofThread
 
         Rect inflated_rec = Rect(scaled_rect.x, scaled_rect.y, TILE_SIZE, TILE_SIZE);
 
-        int move = 64;
+        int move = 40;
+
         inflated_rec.x -= move;
         if (inflated_rec.x < 0) inflated_rec.x = 0;
 
@@ -124,8 +128,9 @@ class Objectdetector : public ofThread
 
                 mosaik = Mat::zeros(INPUT_WIDTH, INPUT_HEIGHT, CV_8UC3);
             }
-
+            //      cout << "begin add mosaik" << endl;
             img(rect).copyTo(mosaik(Rect(col, row, rect.width, rect.height)));
+            //      cout << "end add mosaik" << endl;
 
             col += rect.width;
 
@@ -140,23 +145,26 @@ class Objectdetector : public ofThread
                 // auto filename = get_filepath(tostr(ofGetSystemTimeMillis()) + ".jpg");
                 // imwrite(filename, mosaik);
 
-                //    equalizeHist(mosaik, mosaik);
-                m_queue.push(make_tuple(0, mosaik.clone()));
+                //                equalizeHist(mosaik, mosaik);
+                m_queue.push(mosaik.clone());
                 cout << " mosaik added." << endl;
                 first_set = false;
             }
             count++;
         }
+        m_processing = true;
     }
 
     void start()
     {
+        m_output.clear();
         m_frames_map.clear();
         m_first_set = false;
 
-        m_filename = get_filepath(".jpg");
+        m_filename = get_filepath(m_config.parameters.camname + ".jpg");
 
         m_detected = false;
+
         m_processing = true;
     }
 
@@ -188,7 +196,7 @@ class Objectdetector : public ofThread
     string m_file;
     string m_time_zone = m_config.settings.timezone;
 
-    queue<tuple<int, Mat>> m_queue;
+    queue<Mat> m_queue;
 
     string get_filepath(const string &extension)
     {
@@ -216,16 +224,22 @@ class Objectdetector : public ofThread
         while (isThreadRunning()) {
             m_page = 0;
             while (!m_queue.empty() && m_processing) {
-                m_detected = this->detect(m_queue.front());
+                cout << "start detection..." << endl;
+                m_detected = detect(m_queue.front());
+                cout << "finish detection." << endl;
+
                 m_page++;
 
                 m_queue.pop();
 
                 if (m_detected) {
-                    m_frames_map.clear();
+                    //   m_processing = false;
+
+                    while (!m_queue.empty()) {
+                        m_queue.pop();
+                    }
 
                     cout << "person detected" << endl;
-                    m_processing = false;
                     break;
                 }
             }
@@ -256,16 +270,9 @@ class Objectdetector : public ofThread
         return result;
     }
 
-    bool detect(const tuple<int, Mat> &tuple)
-
+    bool detect(const Mat &mosaik)
     {
-        int page;
-        Mat mosaik;
-
-        tie(page, mosaik) = tuple;
-
-        cout << "Scanning..." << endl;
-
+        cout << "ENTER DETECT" << endl;
         Mat blob;
         auto input_image = format_yolov5(mosaik);
 
@@ -326,70 +333,124 @@ class Objectdetector : public ofThread
             result.box = boxes[idx];
             m_output.push_back(result);
 
-            this->draw(page, mosaik);
-
-            found = true;
+            found = draw(mosaik);
         }
-        cout << "scanning finish." << endl;
+        cout << "LEAVE DETECT" << endl;
         return found;
     }
 
-    void draw(int page, const Mat &mosaik)
+    bool draw(const Mat &mosaik)
     {
-        if (!m_output.size()) return;
+        Mat frame;
+
+        if (!m_output.size()) return false;
+
+        mosaik.copyTo(frame);
 
         int detections = m_output.size();
-
-        if (detections) {
-            const auto color = Scalar(0, 255, 0);
-            auto detection = m_output[0];
+        bool found = false;
+        for (int c = 0; c < detections; ++c) {
+            auto detection = m_output[c];
             auto box = detection.box;
             auto classId = detection.class_id;
+            const auto color = colors[classId % colors.size()];
+            found = m_classes[classId] == "person";
 
-            ofRectangle found_rect(toOf(box));
-            rectangle(mosaik, box, color, 2);
+            cv::rectangle(frame, box, color, 1.5);
 
-            ofRectangle rect(0, 0, TILE_SIZE, TILE_SIZE);
+            cv::rectangle(frame, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y),
+                          color, cv::FILLED);
+            cv::putText(frame, m_classes[classId].c_str(), cv::Point(box.x, box.y - 5),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+            /*
+                const auto color = Scalar(0, 255, 0);
+                auto detection = m_output[c];
+                auto box = detection.box;
+                auto classId = detection.class_id;
 
-            int colmax = INPUT_WIDTH / TILE_SIZE;
-            int tiles = INPUT_WIDTH * colmax / TILE_SIZE;
-            int i = 0;
-            bool found = false;
-            for (; i <= tiles; i++) {
-                //               rectangle(mosaik, toCv(rect), color, 3);
+                found = m_classes[classId] == "person";
 
-                if (found_rect.intersects(rect)) {
-                    rectangle(mosaik, toCv(rect), color, 2);
-                    found = true;
-                    break;
-                }
+                ofRectangle found_rect(toOf(box));
+                rectangle(input, box, color, 2);
 
-                rect.x += TILE_SIZE;
-                if (rect.x >= colmax * TILE_SIZE) {
-                    rect.y += TILE_SIZE;
-                    rect.x = 0;
-                }
-            }
+                ofRectangle rect(0, 0, TILE_SIZE, TILE_SIZE);
 
-            if (!found) return;
+                // int colmax = INPUT_WIDTH / TILE_SIZE;
+                // int tiles = INPUT_WIDTH * colmax / TILE_SIZE;
+                // int i = 0;
 
-            int idx = (m_page * tiles) + i;
+                float fscale = 0.4;
+                int thickness = 1;
 
-            Mat frame;
-            Rect r;
-            tie(frame, r) = m_frames_map[idx];
+                string title = m_classes[classId];  // + " " + tostr(detection.confidence);
+                rectangle(input, box, color, 2);
+                rectangle(input, Point(box.x - 1, box.y - 20), cv::Point(box.x + box.width, box.y),
+                          color, FILLED);
 
-            rectangle(frame, r, color, 2);
-            rectangle(frame, Point(r.x - 1, r.y - 20), cv::Point(r.x + r.width, r.y), color,
-                      FILLED);
+                putText(input, title, Point(box.x + 2, box.y - 5), FONT_HERSHEY_SIMPLEX, fscale,
+                        Scalar(0, 0, 0), thickness, LINE_AA, false);
 
-            float fscale = 0.4;
+                        */
+
+            // for (; i <= tiles; i++) {
+            ////               rectangle(input, toCv(rect), color, 3);
+
+            // rectangle(input, box, color, 3);
+
+            // if (found_rect.intersects(rect)) {
+            // rectangle(input, toCv(rect), color, 2);
+            // found = true;
+            // break;
+            //}
+
+            // rect.x += TILE_SIZE;
+            // if (rect.x >= colmax * TILE_SIZE) {
+            // rect.y += TILE_SIZE;
+            // rect.x = 0;
+            //}
+            //}
+            // if (!found) return;
+
+            /*float fscale = 0.4;
             int thickness = 1;
-            string title = m_classes[classId] + " " + tostr(detection.confidence) + " confidence";
-            putText(frame, title, Point(r.x + 2, r.y - 5), cv::FONT_HERSHEY_SIMPLEX, fscale,
+
+            string title = m_classes[classId] + " " + tostr(detection.confidence);
+            rectangle(input, Point(rect.x - 1, rect.y - 20), cv::Point(rect.x + rect.width, rect.y),
+                      color, FILLED);
+
+            putText(input, title, Point(rect.x + 2, rect.y - 5), FONT_HERSHEY_SIMPLEX, fscale,
                     Scalar(0, 0, 0), thickness, LINE_AA, false);
 
-            imwrite(m_filename, frame);
+            imwrite(m_filename, input);*/
+
+            /*
+                        int idx = (m_page * tiles) + i;
+
+                        Mat frame;
+                        Rect r;
+                        tie(frame, r) = m_frames_map[idx];
+                        m_frames_map.erase(idx);
+
+                        rectangle(frame, r, color, 2);
+                        rectangle(frame, Point(r.x - 1, r.y - 20), cv::Point(r.x +
+               r.width, r.y), color, FILLED);
+
+                        float fscale = 0.4;
+                        int thickness = 1;
+                        string title = m_classes[classId] + " " +
+               tostr(detection.confidence) + " confidence"; putText(frame, title,
+               Point(r.x + 2, r.y - 5), cv::FONT_HERSHEY_SIMPLEX, fscale, Scalar(0, 0,
+               0), thickness, LINE_AA, false);
+
+                        // finally save the detected frame
+                        if (frame.empty()) cout <<
+               "-------------------------------------" << endl; imwrite(m_filename,
+               frame);*/
+
+            // if (found) break;
         }
+
+        if (found) imwrite(m_filename, frame);
+        return found;
     }
 };
