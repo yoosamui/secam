@@ -19,7 +19,7 @@ void ofApp::setup()
     ofSetFrameRate(m_config.parameters.fps);
     ofSetVerticalSync(true);
 
-    ofLogToFile("data/logs/" + m_config.parameters.camname + ".log", false);
+    ofLogToFile("data/logs/" + m_config.parameters.camname + ".log", true);
 
     if (!m_config.load()) {
         common::log("load Configuration error.", OF_LOG_WARNING);

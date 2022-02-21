@@ -8,7 +8,6 @@
 class IMotion
 {
   public:
-    virtual void test() = 0;
     virtual void init() = 0;
 };
 
@@ -30,16 +29,6 @@ class Motion : public IMotion
 
         // detection per frames
         m_timex_detections.setLimit(frames);
-    }
-
-    void test() override
-    {
-        m_maskPoints = m_config.mask_points;
-
-        if (m_maskPoints.size()) {
-            //
-        }
-        //
     }
 
     void init()  // const override
@@ -104,7 +93,7 @@ class Motion : public IMotion
             m_threshold.copyTo(m_output, m_mask);
             m_gray.copyTo(m_mask_image, m_mask);
         } else {
-            // in client mode use the MOG2 sunstraction HIGH CPU usage
+            // if client mode set, than use the MOG2 sunstraction. HIGH CPU usage
             mog2->apply(m_gray, m_difference);
 
             blur(m_difference, 20);
@@ -257,7 +246,8 @@ class Motion : public IMotion
         // check detections after defined frames.
         if (m_timex_detections.elapsed()) {
             // clang-format off
-            if (found &&
+
+            if (found && m_max_rect.width < 150 && m_max_rect.height < 150 && // TODO config
                 m_contour_finder.size() >= (size_t)m_config.settings.mincontoursize &&
                 m_detections_count >= m_config.settings.detectionsmaxcount) {
 

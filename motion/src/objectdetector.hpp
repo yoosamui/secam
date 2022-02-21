@@ -1,3 +1,12 @@
+//
+// MIT
+//
+// Copyright (c) 2022 doleron
+//
+// https://github.com/doleron/yolov5-opencv-cpp-python
+// https://github.com/doleron/yolov5-opencv-cpp-python.git
+//
+
 #pragma once
 
 #include <opencv2/dnn.hpp>
@@ -27,7 +36,6 @@ class Objectdetector : public ofThread
     const float NMS_THRESHOLD = 0.4;
     const float CONFIDENCE_THRESHOLD = 0.5;
 
-    const int TILE_SIZE = 320;  // 213;
     const string m_title = "PERSON_";
 
     struct Detection {
@@ -60,112 +68,40 @@ class Objectdetector : public ofThread
         m_net = result;
     }
 
-    bool m_first_set = false;
-    float m_sx = 0, m_sy = 0;
-    long m_frame_number = 0;
-    int m_idx = 0;
     void add(const Mat &img, const Rect &r)
     {
-        if (++m_frame_number % 2 || img.empty() || !m_processing ||
-            m_frames_map.size() >= QUEUE_MAX_SIZE)
+        if (m_frames.size() > 10 || ++m_frame_number % 3 || img.empty() || !m_processing ||
+            m_block_add) {
             return;
-
-        if (!m_first_set) {
-            m_first_set = true;
-
-            m_sx = static_cast<float>(img.cols * 100 / 320) / 100;
-            m_sy = static_cast<float>(img.rows * 100 / 240) / 100;
         }
+
+        common::log("A add tile =  " + to_string(r.width) + " x " + to_string(r.height));
 
         Mat rgb;
         img.copyTo(rgb);
 
         common::bgr2rgb(rgb);
 
-        ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
-
-        poly.scale(m_sx, m_sy);
-        Rect scaled_rect(toCv(poly.getBoundingBox()));
-
-        Rect inflated_rec = Rect(scaled_rect.x, scaled_rect.y, TILE_SIZE, TILE_SIZE);
-
-        int move = 40;
-
-        inflated_rec.x -= move;
-        if (inflated_rec.x < 0) inflated_rec.x = 0;
-
-        inflated_rec.y -= move;
-        if (inflated_rec.y < 0) inflated_rec.y = 0;
-
-        if (inflated_rec.x + inflated_rec.width > rgb.cols) {
-            inflated_rec.x -= (scaled_rect.x + inflated_rec.width) - rgb.cols;
-        }
-
-        if (inflated_rec.y + inflated_rec.height > rgb.rows) {
-            inflated_rec.y -= (scaled_rect.y + inflated_rec.width) - rgb.rows;
-        }
-
-        m_frames_map[m_idx] = make_tuple(rgb.clone(), Rect(inflated_rec));
-
-        m_idx++;
+        m_frames.push_back(rgb.clone());
     }
 
     void detect()
     {
-        int col = 0, row = 0;
-        size_t count = 0;
-        bool first_set = false;
+        m_block_add = true;
 
-        Mat mosaik;
-        for (auto &m : m_frames_map) {
-            Mat img;
-            Rect rect;
-            std::tie(img, rect) = m.second;
-
-            if (!first_set) {
-                first_set = true;
-                row = col = 0;
-
-                mosaik = Mat::zeros(INPUT_WIDTH, INPUT_HEIGHT, CV_8UC3);
-            }
-            //      cout << "begin add mosaik" << endl;
-            img(rect).copyTo(mosaik(Rect(col, row, rect.width, rect.height)));
-            //      cout << "end add mosaik" << endl;
-
-            col += rect.width;
-
-            if (col + rect.width > INPUT_WIDTH) {
-                col = 0;
-                row += rect.height;
-            }
-
+        for (auto &frame : m_frames) {
             if (m_detected) break;
-
-            if (row + rect.height > INPUT_HEIGHT || count >= m_frames_map.size() - 1) {
-                // auto filename = get_filepath(tostr(ofGetSystemTimeMillis()) + ".jpg");
-                // imwrite(filename, mosaik);
-
-                //                equalizeHist(mosaik, mosaik);
-                m_queue.push(mosaik.clone());
-                cout << " mosaik added." << endl;
-                first_set = false;
-            }
-            count++;
+            m_queue.push(frame.clone());
         }
-        m_processing = true;
+
+        reset();
+        m_block_add = false;
     }
 
     void start()
     {
-        m_output.clear();
-        m_frames_map.clear();
-        m_first_set = false;
-
+        reset();
         m_filename = get_filepath(m_config.parameters.camname + ".jpg");
-
-        m_detected = false;
-
-        m_processing = true;
     }
 
     bool detected()
@@ -177,15 +113,17 @@ class Objectdetector : public ofThread
   private:
     Config &m_config = m_config.getInstance();
 
+    vector<Mat> m_frames;
+    vector<string> m_classes;
+
+    int m_frame_number = 1;
+
     bool m_is_cuda = false;
     bool m_processing = false;
+    bool m_block_add = false;
     bool m_detected = false;
 
     int m_page = 0;
-    map<int, tuple<Mat, Rect>> m_frames_map;
-
-    vector<string> m_classes;
-    vector<Detection> m_output;
 
     dnn::Net m_net;
 
@@ -197,6 +135,15 @@ class Objectdetector : public ofThread
     string m_time_zone = m_config.settings.timezone;
 
     queue<Mat> m_queue;
+
+    void reset()
+    {
+        m_frames.clear();
+
+        m_block_add = false;
+        m_detected = false;
+        m_processing = true;
+    }
 
     string get_filepath(const string &extension)
     {
@@ -221,25 +168,22 @@ class Objectdetector : public ofThread
     // override
     void threadedFunction()
     {
+        vector<Detection> output;
         while (isThreadRunning()) {
-            m_page = 0;
             while (!m_queue.empty() && m_processing) {
-                cout << "start detection..." << endl;
-                m_detected = detect(m_queue.front());
-                cout << "finish detection." << endl;
+                common::log("Start detection => " + to_string(m_page));
 
-                m_page++;
+                output.clear();
+                m_detected = detect(m_queue.front(), output);
 
                 m_queue.pop();
 
                 if (m_detected) {
-                    //   m_processing = false;
-
                     while (!m_queue.empty()) {
                         m_queue.pop();
                     }
 
-                    cout << "person detected" << endl;
+                    common::log("!!!Person detected!!!");
                     break;
                 }
             }
@@ -270,11 +214,10 @@ class Objectdetector : public ofThread
         return result;
     }
 
-    bool detect(const Mat &mosaik)
+    int detect(const Mat &img, vector<Detection> &output)
     {
-        cout << "ENTER DETECT" << endl;
         Mat blob;
-        auto input_image = format_yolov5(mosaik);
+        auto input_image = format_yolov5(img);
 
         dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT),
                            Scalar(), true, false);
@@ -301,6 +244,7 @@ class Objectdetector : public ofThread
                 Point class_id;
                 double max_class_score;
                 minMaxLoc(scores, 0, &max_class_score, 0, &class_id);
+
                 if (max_class_score > SCORE_THRESHOLD) {
                     confidences.push_back(confidence);
 
@@ -315,6 +259,7 @@ class Objectdetector : public ofThread
                     int top = int((y - 0.5 * h) * y_factor);
                     int width = int(w * x_factor);
                     int height = int(h * y_factor);
+
                     boxes.push_back(Rect(left, top, width, height));
                 }
             }
@@ -322,135 +267,80 @@ class Objectdetector : public ofThread
             data += 85;
         }
 
-        bool found = false;
         vector<int> nms_result;
         dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD, NMS_THRESHOLD, nms_result);
         for (size_t i = 0; i < nms_result.size(); i++) {
             int idx = nms_result[i];
+
             Detection result;
             result.class_id = class_ids[idx];
             result.confidence = confidences[idx];
             result.box = boxes[idx];
-            m_output.push_back(result);
 
-            found = draw(mosaik);
+            output.push_back(result);
+
+            return draw(img, output) != 0;
         }
-        cout << "LEAVE DETECT" << endl;
-        return found;
+
+        return 0;
     }
 
-    bool draw(const Mat &mosaik)
+    Rect inflate(const Rect &rect, size_t size, const Mat frame)
     {
-        Mat frame;
+        Rect r = rect;
 
-        if (!m_output.size()) return false;
+        r.x -= size;
+        if (r.x < 0) r.x = 0;
 
-        mosaik.copyTo(frame);
+        r.y -= size;
+        if (r.y < 0) r.y = 0;
 
-        int detections = m_output.size();
-        bool found = false;
-        for (int c = 0; c < detections; ++c) {
-            auto detection = m_output[c];
-            auto box = detection.box;
-            auto classId = detection.class_id;
-            const auto color = colors[classId % colors.size()];
-            found = m_classes[classId] == "person";
-
-            cv::rectangle(frame, box, color, 1.5);
-
-            cv::rectangle(frame, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y),
-                          color, cv::FILLED);
-            cv::putText(frame, m_classes[classId].c_str(), cv::Point(box.x, box.y - 5),
-                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-            /*
-                const auto color = Scalar(0, 255, 0);
-                auto detection = m_output[c];
-                auto box = detection.box;
-                auto classId = detection.class_id;
-
-                found = m_classes[classId] == "person";
-
-                ofRectangle found_rect(toOf(box));
-                rectangle(input, box, color, 2);
-
-                ofRectangle rect(0, 0, TILE_SIZE, TILE_SIZE);
-
-                // int colmax = INPUT_WIDTH / TILE_SIZE;
-                // int tiles = INPUT_WIDTH * colmax / TILE_SIZE;
-                // int i = 0;
-
-                float fscale = 0.4;
-                int thickness = 1;
-
-                string title = m_classes[classId];  // + " " + tostr(detection.confidence);
-                rectangle(input, box, color, 2);
-                rectangle(input, Point(box.x - 1, box.y - 20), cv::Point(box.x + box.width, box.y),
-                          color, FILLED);
-
-                putText(input, title, Point(box.x + 2, box.y - 5), FONT_HERSHEY_SIMPLEX, fscale,
-                        Scalar(0, 0, 0), thickness, LINE_AA, false);
-
-                        */
-
-            // for (; i <= tiles; i++) {
-            ////               rectangle(input, toCv(rect), color, 3);
-
-            // rectangle(input, box, color, 3);
-
-            // if (found_rect.intersects(rect)) {
-            // rectangle(input, toCv(rect), color, 2);
-            // found = true;
-            // break;
-            //}
-
-            // rect.x += TILE_SIZE;
-            // if (rect.x >= colmax * TILE_SIZE) {
-            // rect.y += TILE_SIZE;
-            // rect.x = 0;
-            //}
-            //}
-            // if (!found) return;
-
-            /*float fscale = 0.4;
-            int thickness = 1;
-
-            string title = m_classes[classId] + " " + tostr(detection.confidence);
-            rectangle(input, Point(rect.x - 1, rect.y - 20), cv::Point(rect.x + rect.width, rect.y),
-                      color, FILLED);
-
-            putText(input, title, Point(rect.x + 2, rect.y - 5), FONT_HERSHEY_SIMPLEX, fscale,
-                    Scalar(0, 0, 0), thickness, LINE_AA, false);
-
-            imwrite(m_filename, input);*/
-
-            /*
-                        int idx = (m_page * tiles) + i;
-
-                        Mat frame;
-                        Rect r;
-                        tie(frame, r) = m_frames_map[idx];
-                        m_frames_map.erase(idx);
-
-                        rectangle(frame, r, color, 2);
-                        rectangle(frame, Point(r.x - 1, r.y - 20), cv::Point(r.x +
-               r.width, r.y), color, FILLED);
-
-                        float fscale = 0.4;
-                        int thickness = 1;
-                        string title = m_classes[classId] + " " +
-               tostr(detection.confidence) + " confidence"; putText(frame, title,
-               Point(r.x + 2, r.y - 5), cv::FONT_HERSHEY_SIMPLEX, fscale, Scalar(0, 0,
-               0), thickness, LINE_AA, false);
-
-                        // finally save the detected frame
-                        if (frame.empty()) cout <<
-               "-------------------------------------" << endl; imwrite(m_filename,
-               frame);*/
-
-            // if (found) break;
+        r.width += size * 2;
+        if (r.x + r.width > frame.cols) {
+            r.x = (r.x + r.width) - frame.cols;
         }
 
-        if (found) imwrite(m_filename, frame);
+        r.height += size * 2;
+        if (r.y + r.height > frame.rows) {
+            r.y = (r.y + r.height) - frame.rows;
+        }
+
+        return r;
+    }
+
+    bool draw(const Mat &frame, vector<Detection> &output)
+    {
+        Mat input;
+        frame.copyTo(input);
+
+        int detections = output.size();
+        bool found = false;
+
+        for (int c = 0; c < detections; ++c) {
+            auto detection = output[c];
+
+            auto box = detection.box;
+            auto classId = detection.class_id;
+
+            const auto color = colors[classId % colors.size()];
+
+            found = m_classes[classId] == "person";
+
+            Rect r = inflate(box, 20, input);
+
+            rectangle(input, r, color, 2);
+            rectangle(input, Point(r.x - 1, r.y - 20), cv::Point(r.x + r.width, r.y), color,
+                      FILLED);
+
+            float fscale = 0.4;
+            int thickness = 1;
+            string title = m_classes[classId];
+
+            putText(input, title, Point(r.x + 2, r.y - 5), cv::FONT_HERSHEY_SIMPLEX, fscale,
+                    Scalar(0, 0, 0), thickness, LINE_AA, false);
+        }
+
+        if (found) imwrite(m_filename, input);
         return found;
     }
 };
