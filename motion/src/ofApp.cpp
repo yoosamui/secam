@@ -48,7 +48,7 @@ void ofApp::setup()
     ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
 
     // recording stop timex
-    m_timex_stoprecording.setLimit(5000);
+    m_timex_stoprecording.setLimit(30000);
     m_timex_second.setLimit(1000);
     m_timex_recording_point.setLimit(1000);
 
