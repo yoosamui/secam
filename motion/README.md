@@ -1,11 +1,10 @@
 # secam
-camera  Surveillance system with OF and OpenCv
+camera Surveillance system with OF and OpenCv
 
 Part of the secam Surveillance solution.
 Solution modules:
 
 #secam-motion
-#secam-recorder
 #secam-viewer
 
 -----------------------------------------------
