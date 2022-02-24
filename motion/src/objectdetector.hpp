@@ -20,6 +20,7 @@
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
 #include "opencv2/imgcodecs.hpp"
+#include "persondetector.hpp"
 
 using namespace ofxCv;
 using namespace cv;
@@ -75,27 +76,61 @@ class Objectdetector : public ofThread
             return;
         }
 
-        common::log("A add tile =  " + to_string(r.width) + " x " + to_string(r.height));
+        common::log("A add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
 
         Mat rgb;
         img.copyTo(rgb);
 
         common::bgr2rgb(rgb);
 
-        m_frames.push_back(rgb.clone());
+        float m_sx = static_cast<float>(640 * 100 / 320) / 100;
+        float m_sy = static_cast<float>(640 * 100 / 240) / 100;
+
+        ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
+
+        poly.scale(m_sx, m_sy);
+        Rect scaled_rect(toCv(poly.getBoundingBox()));
+
+        Rect inflated_rec = Rect(scaled_rect.x, scaled_rect.y, 320, 320);
+
+        int move = 40;
+
+        inflated_rec.x -= move;
+        if (inflated_rec.x < 0) inflated_rec.x = 0;
+
+        inflated_rec.y -= move;
+        if (inflated_rec.y < 0) inflated_rec.y = 0;
+
+        if (inflated_rec.x + inflated_rec.width > rgb.cols) {
+            inflated_rec.x -= (scaled_rect.x + inflated_rec.width) - rgb.cols;
+        }
+
+        if (inflated_rec.y + inflated_rec.height > rgb.rows) {
+            inflated_rec.y -= (scaled_rect.y + inflated_rec.height) - rgb.rows;
+        }
+
+        Mat result = Mat::zeros(640, 640, CV_8UC3);
+        rgb(inflated_rec).copyTo(result(inflated_rec));
+
+        // auto filename = get_filepath(to_string(getTickCount()) + "ORIGINAL.jpg");
+        // imwrite(filename, rgb);
+
+        // auto filename = get_filepath(to_string(getTickCount()) + "_640_.jpg");
+        // imwrite(filename, result);
+
+        m_frames.push_back(make_tuple(result, rgb));
     }
 
     void detect()
     {
         m_block_add = true;
-
-        for (auto &frame : m_frames) {
+        for (auto t : m_frames) {
             if (m_detected) break;
-            m_queue.push(frame.clone());
+
+            m_queue.push(t);
         }
 
         reset();
-        m_block_add = false;
     }
 
     void start()
@@ -113,7 +148,7 @@ class Objectdetector : public ofThread
   private:
     Config &m_config = m_config.getInstance();
 
-    vector<Mat> m_frames;
+    vector<tuple<Mat, Mat>> m_frames;
     vector<string> m_classes;
 
     int m_frame_number = 1;
@@ -134,7 +169,9 @@ class Objectdetector : public ofThread
     string m_file;
     string m_time_zone = m_config.settings.timezone;
 
-    queue<Mat> m_queue;
+    queue<tuple<Mat, Mat>> m_queue;
+
+    Persondetector m_person;
 
     void reset()
     {
@@ -181,6 +218,7 @@ class Objectdetector : public ofThread
                 if (m_detected) {
                     while (!m_queue.empty()) {
                         m_queue.pop();
+                        ofSleepMillis(10);
                     }
 
                     common::log("!!!Person detected!!!");
@@ -214,9 +252,11 @@ class Objectdetector : public ofThread
         return result;
     }
 
-    int detect(const Mat &img, vector<Detection> &output)
+    int detect(tuple<Mat, Mat> t, vector<Detection> &output)
     {
-        Mat blob;
+        Mat blob, img, base;
+        tie(img, base) = t;
+
         auto input_image = format_yolov5(img);
 
         dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT),
@@ -279,33 +319,10 @@ class Objectdetector : public ofThread
 
             output.push_back(result);
 
-            return draw(img, output) != 0;
+            return draw(base, output) != 0;
         }
 
         return 0;
-    }
-
-    Rect inflate(const Rect &rect, size_t size, const Mat frame)
-    {
-        Rect r = rect;
-
-        r.x -= size;
-        if (r.x < 0) r.x = 0;
-
-        r.y -= size;
-        if (r.y < 0) r.y = 0;
-
-        r.width += size * 2;
-        if (r.x + r.width > frame.cols) {
-            r.x = (r.x + r.width) - frame.cols;
-        }
-
-        r.height += size * 2;
-        if (r.y + r.height > frame.rows) {
-            r.y = (r.y + r.height) - frame.rows;
-        }
-
-        return r;
     }
 
     bool draw(const Mat &frame, vector<Detection> &output)
@@ -342,5 +359,28 @@ class Objectdetector : public ofThread
 
         if (found) imwrite(m_filename, input);
         return found;
+    }
+
+    Rect inflate(const Rect &rect, size_t size, const Mat frame)
+    {
+        Rect r = rect;
+
+        r.x -= size;
+        if (r.x < 0) r.x = 0;
+
+        r.y -= size;
+        if (r.y < 0) r.y = 0;
+
+        r.width += size * 2;
+        if (r.x + r.width > frame.cols) {
+            r.x = (r.x + r.width) - frame.cols;
+        }
+
+        r.height += size * 2;
+        if (r.y + r.height > frame.rows) {
+            r.y = (r.y + r.height) - frame.rows;
+        }
+
+        return r;
     }
 };

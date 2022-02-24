@@ -55,9 +55,10 @@ void ofApp::setup()
     m_writer.startThread();
     m_detector.startThread();
 
-    ofSetWindowTitle("CAM-" + m_config.parameters.camname + " / " + m_config.settings.timezone);
-
-    if (!m_config.isServer()) m_font.load(OF_TTF_SANS, 9, true, true);
+    if (!m_config.isServer()) {
+        ofSetWindowTitle("CAM-" + m_config.parameters.camname + " / " + m_config.settings.timezone);
+        m_font.load(OF_TTF_SANS, 9, true, true);
+    }
 
     m_processing = true;
 }
@@ -66,7 +67,7 @@ void ofApp::setup()
 void ofApp::update()
 {
     if (!m_connected) {
-        m_connected = m_cam.open(m_config.settings.uri, CAP_FFMPEG);
+        m_connected = m_cam.connect(m_config.settings.uri);
 
         common::log((m_connected ? "connected" : "lost connection."));
 
@@ -91,7 +92,7 @@ void ofApp::update()
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
         if (m_lowframerate) {
             common::log("low frame rate " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
-            //            m_reconnect = true;
+            // m_reconnect = true;
             m_frame_number = 0;
             return;
         }
@@ -129,9 +130,7 @@ void ofApp::update()
                 m_recording = true;
             }
 
-            // common::log("motion detected: " +to_string(m_detections_count)+" w " +
-            // to_string(m_max_rect.width));
-            common::log("motion detected! ");
+            common::log("motion detected");
             m_recording_duration = VIDEODURATION;
             m_timex_stoprecording.reset();
 
@@ -250,10 +249,10 @@ string& ofApp::getStatusInfo()
     // clang-format off
 
     char buf[512];
-    sprintf(buf,"FPS/Frame: %2.2f / %lu q:%.3ld [ %3d, %3d, %3d, %3d ] v:%2d",
+    sprintf(buf,"FPS/Frame: %2.2f / %lu q:%.3d [ %3d, %3d, %3d, %3d ] v:%2d",
              ofGetFrameRate(),
              m_frame_number,
-             m_writer.get_queue().size(),
+            (int) m_writer.get_queue().size(),
              m_config.settings.minthreshold,
              m_config.settings.minrectwidth,
              m_config.settings.mincontoursize,
