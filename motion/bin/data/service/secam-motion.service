@@ -1,0 +1,16 @@
+[Unit]
+Description=secam-motion service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+User=yoo
+#ExecStart=/usr/bin/env php /path/to/server.php
+ExecStart=/media/yoo/develop/of_v0.11.2_linux64gcc6_release/apps/secam/motion/bin/start-service.sh gate
+
+
+[Install]
+WantedBy=multi-user.target
