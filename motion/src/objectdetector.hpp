@@ -20,7 +20,6 @@
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
 #include "opencv2/imgcodecs.hpp"
-#include "persondetector.hpp"
 
 using namespace ofxCv;
 using namespace cv;
@@ -76,15 +75,15 @@ class Objectdetector : public ofThread
             return;
         }
 
-        common::log("A add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
+        common::log("Add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
 
         Mat rgb;
         img.copyTo(rgb);
 
         common::bgr2rgb(rgb);
 
-        float m_sx = static_cast<float>(640 * 100 / 320) / 100;
-        float m_sy = static_cast<float>(640 * 100 / 240) / 100;
+        float m_sx = static_cast<float>(INPUT_WIDTH * 100 / 320) / 100;
+        float m_sy = static_cast<float>(INPUT_HEIGHT * 100 / 240) / 100;
 
         ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
 
@@ -109,14 +108,8 @@ class Objectdetector : public ofThread
             inflated_rec.y -= (scaled_rect.y + inflated_rec.height) - rgb.rows;
         }
 
-        Mat result = Mat::zeros(640, 640, CV_8UC3);
+        Mat result = Mat::zeros(INPUT_WIDTH, INPUT_HEIGHT, CV_8UC3);
         rgb(inflated_rec).copyTo(result(inflated_rec));
-
-        // auto filename = get_filepath(to_string(getTickCount()) + "ORIGINAL.jpg");
-        // imwrite(filename, rgb);
-
-        // auto filename = get_filepath(to_string(getTickCount()) + "_640_.jpg");
-        // imwrite(filename, result);
 
         m_frames.push_back(make_tuple(result, rgb));
     }
@@ -170,8 +163,6 @@ class Objectdetector : public ofThread
     string m_time_zone = m_config.settings.timezone;
 
     queue<tuple<Mat, Mat>> m_queue;
-
-    Persondetector m_person;
 
     void reset()
     {
@@ -341,7 +332,7 @@ class Objectdetector : public ofThread
 
             const auto color = colors[classId % colors.size()];
 
-            found = m_classes[classId] == "person";
+            if (!found) found = m_classes[classId] == "person";
 
             Rect r = inflate(box, 20, input);
 
@@ -361,7 +352,7 @@ class Objectdetector : public ofThread
         return found;
     }
 
-    Rect inflate(const Rect &rect, size_t size, const Mat frame)
+    Rect inflate(const Rect &rect, size_t size, const Mat &frame)
     {
         Rect r = rect;
 

@@ -30,8 +30,11 @@ namespace common
     //
     void log(const string& message, ofLogLevel level)
     {
+        ofLogToFile("data/logs/" + Config::getInstance().parameters.camname + ".log", true);
         ofLog(level) << message << endl;
-        cout << to_string(level) << " : " << message << endl;
+
+        ofLogToConsole();
+        ofLog(level) << message << endl;
     }
 
     string getTimestamp(const string& time_zone, const string& format_string)

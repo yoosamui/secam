@@ -247,7 +247,7 @@ class Motion : public IMotion
         if (m_timex_detections.elapsed()) {
             // clang-format off
 
-            if (found && m_max_rect.width < 150 && m_max_rect.height < 150 && // TODO config
+            if (found && m_max_rect.width < m_config.settings.minrectwidth && m_max_rect.height < m_config.settings.minrectwidth && // TODO config
                 m_contour_finder.size() >= (size_t)m_config.settings.mincontoursize &&
                 m_detections_count >= m_config.settings.detectionsmaxcount) {
 

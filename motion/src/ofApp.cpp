@@ -19,8 +19,6 @@ void ofApp::setup()
     ofSetFrameRate(m_config.parameters.fps);
     ofSetVerticalSync(true);
 
-    ofLogToFile("data/logs/" + m_config.parameters.camname + ".log", true);
-
     if (!m_config.load()) {
         common::log("load Configuration error.", OF_LOG_WARNING);
         terminate();
@@ -194,10 +192,19 @@ void ofApp::draw()
             int centerx = (m_motion.getWidth() / 2) - (m_config.settings.minrectwidth / 2);
             int centery = (m_motion.getHeight() / 2) - (m_config.settings.minrectwidth / 2);
 
-            Rect r(centerx, centery, m_config.settings.minrectwidth,
-                   m_config.settings.minrectwidth);
+            ofPushStyle();
 
-            ofDrawRectangle(r.x, r.y, r.width, r.height);
+            ofDrawRectangle(centerx, centery, m_config.settings.minrectwidth,
+                            m_config.settings.minrectwidth);
+
+            centerx = (m_motion.getWidth() / 2) - (m_config.settings.maxrectwidth / 2);
+            centery = (m_motion.getHeight() / 2) - (m_config.settings.maxrectwidth / 2);
+
+            ofNoFill();
+            ofDrawRectangle(centerx, centery, m_config.settings.maxrectwidth,
+                            m_config.settings.maxrectwidth);
+            ofPopStyle();
+
         } break;
 
         case 3:
@@ -316,15 +323,18 @@ void ofApp::drawTimestamp()
     if (m_frame.empty()) return;
 
     int fontface = cv::FONT_HERSHEY_SIMPLEX;
-    double scale = 0.4;
+    double scale = 0.5;
     int thickness = 1;
     int x = m_frame.cols;
     int y = 0;
 
-    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(0, 255, 0), CV_FILLED);
-    cv::putText(m_frame, m_timestamp, cv::Point(x - 138, y + 12), fontface, scale,
-                cv::Scalar(0, 0, 0), thickness, false);
+    // cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(255, 255, 255),
+    // CV_FILLED);
+
+    cv::putText(m_frame, m_timestamp, cv::Point(x - 180, y + 12), fontface, scale,
+                cv::Scalar(255, 255, 255), thickness, LINE_AA, false);
 }
+
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key)
 {

@@ -30,6 +30,7 @@ class Config
         int port = 554;
 
         int minrectwidth = 10;
+        int maxrectwidth = 150;
         int minarearadius = 1;
         int mincontoursize = 1;
         int detectionsmaxcount = 5;

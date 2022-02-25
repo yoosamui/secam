@@ -63,10 +63,10 @@ int main(int argc, char* argv[])
         bfs::remove(logfile);
     }
 
-    // if (!bfs::exists(CHECK_CONNECTION_SCRIPT)) {
-    // cout << "Can't find " << string(CHECK_CONNECTION_SCRIPT) << " script file." << endl;
-    // return 1;
-    //}
+    auto logdir = "data/logs";
+    if (!bfs::exists(logdir)) {
+        bfs::create_directory(logdir);
+    }
 
     ofAppNoWindow window;
 
