@@ -2,7 +2,6 @@
 
 #include "camera.hpp"
 #include "config.h"
-#include "dbusclient.h"
 #include "motion.hpp"
 #include "objectdetector.hpp"
 #include "ofMain.h"
@@ -86,5 +85,4 @@ class ofApp : public ofBaseApp
     Objectdetector m_detector;
 
     ofTrueTypeFont m_font;
-    Dbusclient m_dbusclient;
 };

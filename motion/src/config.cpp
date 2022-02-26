@@ -33,6 +33,7 @@ bool Config::load(const string& filename)
     settings.port = XML.getValue("config:port", settings.port);
 
     settings.minrectwidth = XML.getValue("config:minrectwidth", settings.minrectwidth);
+    settings.maxrectwidth = XML.getValue("config:maxrectwidth", settings.maxrectwidth);
     settings.minarearadius = XML.getValue("config:minarearadius", settings.minarearadius);
     settings.mincontoursize = XML.getValue("config:mincontoursize", settings.mincontoursize);
     settings.detectionsmaxcount =
@@ -72,6 +73,7 @@ void Config::save(const string& filename)
     xml.setValue("host", settings.host);
     xml.setValue("port", settings.port);
     xml.setValue("minrectwidth", settings.minrectwidth);
+    xml.setValue("maxrectwidth", settings.maxrectwidth);
     xml.setValue("minarearadius", settings.minarearadius);
     xml.setValue("mincontoursize", settings.mincontoursize);
     xml.setValue("minthreshold", settings.minthreshold);

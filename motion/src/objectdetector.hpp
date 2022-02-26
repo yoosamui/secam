@@ -20,7 +20,6 @@
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
 #include "opencv2/imgcodecs.hpp"
-#include "persondetector.hpp"
 
 using namespace ofxCv;
 using namespace cv;
@@ -44,8 +43,13 @@ class Objectdetector : public ofThread
         float confidence;
         Rect box;
     };
-
-    const vector<Scalar> colors = {Scalar(0, 255, 0)};
+    // clang-format off
+    map<string, Scalar> color_map = {
+        {"person", Scalar(0, 255, 255)},
+        {"motorbike", Scalar(255, 255, 0)},
+        {"car", Scalar(0, 255, 0)}
+    };
+    // clang-format on
 
   public:
     Objectdetector()
@@ -76,58 +80,22 @@ class Objectdetector : public ofThread
             return;
         }
 
-        common::log("A add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
+        common::log("Add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
 
-        Mat rgb;
-        img.copyTo(rgb);
+        Mat frame;
+        img.copyTo(frame);
+        common::bgr2rgb(frame);
 
-        common::bgr2rgb(rgb);
-
-        float m_sx = static_cast<float>(640 * 100 / 320) / 100;
-        float m_sy = static_cast<float>(640 * 100 / 240) / 100;
-
-        ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
-
-        poly.scale(m_sx, m_sy);
-        Rect scaled_rect(toCv(poly.getBoundingBox()));
-
-        Rect inflated_rec = Rect(scaled_rect.x, scaled_rect.y, 320, 320);
-
-        int move = 40;
-
-        inflated_rec.x -= move;
-        if (inflated_rec.x < 0) inflated_rec.x = 0;
-
-        inflated_rec.y -= move;
-        if (inflated_rec.y < 0) inflated_rec.y = 0;
-
-        if (inflated_rec.x + inflated_rec.width > rgb.cols) {
-            inflated_rec.x -= (scaled_rect.x + inflated_rec.width) - rgb.cols;
-        }
-
-        if (inflated_rec.y + inflated_rec.height > rgb.rows) {
-            inflated_rec.y -= (scaled_rect.y + inflated_rec.height) - rgb.rows;
-        }
-
-        Mat result = Mat::zeros(640, 640, CV_8UC3);
-        rgb(inflated_rec).copyTo(result(inflated_rec));
-
-        // auto filename = get_filepath(to_string(getTickCount()) + "ORIGINAL.jpg");
-        // imwrite(filename, rgb);
-
-        // auto filename = get_filepath(to_string(getTickCount()) + "_640_.jpg");
-        // imwrite(filename, result);
-
-        m_frames.push_back(make_tuple(result, rgb));
+        m_frames.push_back(frame);
     }
 
     void detect()
     {
         m_block_add = true;
-        for (auto t : m_frames) {
+        for (auto frame : m_frames) {
             if (m_detected) break;
 
-            m_queue.push(t);
+            m_queue.push(frame);
         }
 
         reset();
@@ -148,7 +116,7 @@ class Objectdetector : public ofThread
   private:
     Config &m_config = m_config.getInstance();
 
-    vector<tuple<Mat, Mat>> m_frames;
+    vector<Mat> m_frames;
     vector<string> m_classes;
 
     int m_frame_number = 1;
@@ -169,9 +137,7 @@ class Objectdetector : public ofThread
     string m_file;
     string m_time_zone = m_config.settings.timezone;
 
-    queue<tuple<Mat, Mat>> m_queue;
-
-    Persondetector m_person;
+    queue<Mat> m_queue;
 
     void reset()
     {
@@ -180,6 +146,13 @@ class Objectdetector : public ofThread
         m_block_add = false;
         m_detected = false;
         m_processing = true;
+    }
+
+    Scalar get_color(const string &name)
+    {
+        if (color_map.count(name) == 0) return Scalar(255, 255, 255);
+
+        return color_map[name];
     }
 
     string get_filepath(const string &extension)
@@ -252,12 +225,12 @@ class Objectdetector : public ofThread
         return result;
     }
 
-    int detect(tuple<Mat, Mat> t, vector<Detection> &output)
-    {
-        Mat blob, img, base;
-        tie(img, base) = t;
+    int detect(Mat frame, vector<Detection> &output)
 
-        auto input_image = format_yolov5(img);
+    {
+        Mat blob;
+
+        auto input_image = format_yolov5(frame);
 
         dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT),
                            Scalar(), true, false);
@@ -318,19 +291,19 @@ class Objectdetector : public ofThread
             result.box = boxes[idx];
 
             output.push_back(result);
-
-            return draw(base, output) != 0;
         }
 
-        return 0;
+        return draw(frame, output) != 0;
     }
 
     bool draw(const Mat &frame, vector<Detection> &output)
     {
+        int detections = output.size();
+        if (!detections) return false;
+
         Mat input;
         frame.copyTo(input);
 
-        int detections = output.size();
         bool found = false;
 
         for (int c = 0; c < detections; ++c) {
@@ -338,10 +311,9 @@ class Objectdetector : public ofThread
 
             auto box = detection.box;
             auto classId = detection.class_id;
+            auto color = get_color(m_classes[classId]);
 
-            const auto color = colors[classId % colors.size()];
-
-            found = m_classes[classId] == "person";
+            if (!found) found = m_classes[classId] == "person";
 
             Rect r = inflate(box, 20, input);
 
@@ -361,7 +333,7 @@ class Objectdetector : public ofThread
         return found;
     }
 
-    Rect inflate(const Rect &rect, size_t size, const Mat frame)
+    Rect inflate(const Rect &rect, size_t size, const Mat &frame)
     {
         Rect r = rect;
 
@@ -373,12 +345,12 @@ class Objectdetector : public ofThread
 
         r.width += size * 2;
         if (r.x + r.width > frame.cols) {
-            r.x = (r.x + r.width) - frame.cols;
+            r.x -= (r.x + r.width) - frame.cols;
         }
 
         r.height += size * 2;
         if (r.y + r.height > frame.rows) {
-            r.y = (r.y + r.height) - frame.rows;
+            r.y -= (r.y + r.height) - frame.rows;
         }
 
         return r;
