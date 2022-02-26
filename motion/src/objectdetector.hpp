@@ -80,7 +80,7 @@ class Objectdetector : public ofThread
         Mat rgb;
         img.copyTo(rgb);
 
-        //    common::bgr2rgb(rgb);
+        common::bgr2rgb(rgb);
         /*
                 float m_sx = static_cast<float>(INPUT_WIDTH * 100 / 320) / 100;
                 float m_sy = static_cast<float>(INPUT_HEIGHT * 100 / 240) / 100;
@@ -309,11 +309,9 @@ class Objectdetector : public ofThread
             result.box = boxes[idx];
 
             output.push_back(result);
-
-            return draw(base, output) != 0;
         }
 
-        return 0;
+        return draw(base, output) != 0;
     }
 
     bool draw(const Mat &frame, vector<Detection> &output)
