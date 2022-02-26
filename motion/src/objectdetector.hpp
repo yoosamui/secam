@@ -51,8 +51,6 @@ class Objectdetector : public ofThread
     };
     // clang-format on
 
-    const vector<Scalar> colors = {Scalar(0, 255, 0)};
-
   public:
     Objectdetector()
     {
@@ -84,20 +82,20 @@ class Objectdetector : public ofThread
 
         common::log("Add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
 
-        Mat rgb;
-        img.copyTo(rgb);
-        common::bgr2rgb(rgb);
+        Mat frame;
+        img.copyTo(frame);
+        common::bgr2rgb(frame);
 
-        m_frames.push_back(make_tuple(rgb, rgb));
+        m_frames.push_back(frame);
     }
 
     void detect()
     {
         m_block_add = true;
-        for (auto t : m_frames) {
+        for (auto frame : m_frames) {
             if (m_detected) break;
 
-            m_queue.push(t);
+            m_queue.push(frame);
         }
 
         reset();
@@ -118,7 +116,7 @@ class Objectdetector : public ofThread
   private:
     Config &m_config = m_config.getInstance();
 
-    vector<tuple<Mat, Mat>> m_frames;
+    vector<Mat> m_frames;
     vector<string> m_classes;
 
     int m_frame_number = 1;
@@ -139,7 +137,7 @@ class Objectdetector : public ofThread
     string m_file;
     string m_time_zone = m_config.settings.timezone;
 
-    queue<tuple<Mat, Mat>> m_queue;
+    queue<Mat> m_queue;
 
     void reset()
     {
@@ -227,12 +225,12 @@ class Objectdetector : public ofThread
         return result;
     }
 
-    int detect(tuple<Mat, Mat> t, vector<Detection> &output)
-    {
-        Mat blob, img, base;
-        tie(img, base) = t;
+    int detect(Mat frame, vector<Detection> &output)
 
-        auto input_image = format_yolov5(img);
+    {
+        Mat blob;
+
+        auto input_image = format_yolov5(frame);
 
         dnn::blobFromImage(input_image, blob, 1. / 255., cv::Size(INPUT_WIDTH, INPUT_HEIGHT),
                            Scalar(), true, false);
@@ -295,8 +293,7 @@ class Objectdetector : public ofThread
             output.push_back(result);
         }
 
-        cout << "..............." << output.size() << endl;
-        return draw(base, output) != 0;
+        return draw(frame, output) != 0;
     }
 
     bool draw(const Mat &frame, vector<Detection> &output)

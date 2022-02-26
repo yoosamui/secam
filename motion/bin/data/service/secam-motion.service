@@ -1,16 +1,88 @@
 [Unit]
 Description=secam-motion service
-After=network.target
-StartLimitIntervalSec=0
+#After=network.target
+#StartLimitIntervalSec=0
+
+#[Timer]
+#OnActiveSec=60
+#OnUnitActiveSec=60
 
 [Service]
+# Type sets the basic behavior of the program. The default is simple
+# which is just a program that can be run from the command line.
 Type=simple
+
+# ExecStart parameter is the command line instruction that starts your program running.
+# In this case it is just the location of the executable,
+# but in other cases it might start an interpreter and run a script.
+#ExecStart=/bin/bash -c /media/yoo/develop/of_v0.11.2_linux64gcc6_release/apps/secam/motion/bin/start-service.sh
+ExecStart=/media/yoo/develop/of_v0.11.2_linux64gcc6_release/apps/secam/motion/bin/motion -c=gate -m=1
+WorkingDirectory=/media/yoo/develop/of_v0.11.2_linux64gcc6_release/apps/secam/motion/bin
+
+StandardOutput=file:/var/log/yoo-motion.log
+StandardError=file:/var/log/yoo-motion-err.log
+
+
+# The Restart parameter tells systemd when to restart your program and
+# RestartSec tells it how long to wait before doing so.
+
+# This means that our program will only be auto-restarted if it exits with a failure code, i.e. any non-zero value.
+# The number of seconds specifies how long systemd will wait before restarting and the default is 100ms.
+# If you want your program to be restarted if it exits for any reason then you can use: Restart=always
+#Restart=on-failure
 Restart=always
-RestartSec=2
+RestartSec=3
+
+# It is important to know that systemd gives up restarting your service if it fails to start more than 5 times within a 10 seconds interval.
+# There are two [Unit] options that control this:
+StartLimitBurst=5
+StartLimitIntervalSec=10
+# A simpler way is to use the RestartSec parameter. For example, if you set it to restart after 3 seconds,
+# then you can never reach 5 failed retries within 10 seconds.
+
+
+#WatchdogSec=6
+
+# Finally KillMode specifies how to stop your program;
+# in this case by killing the process that is running your program.
+KillMode=process
+
 User=yoo
-#ExecStart=/usr/bin/env php /path/to/server.php
-ExecStart=/media/yoo/develop/of_v0.11.2_linux64gcc6_release/apps/secam/motion/bin/start-service.sh gate
+#Group=root
 
+#User=yoo
+#Environment=LD_LIBRARY_PATH=:/usr/local/lib
+#WorkingDirectory=/usr/local/bin
 
+# The final section tells systemd when to start your program running:
 [Install]
-WantedBy=multi-user.target
+#WantedBy=multi-user.target
+WantedBy=graphical.target
+
+# this specifies which other units or targets depend on your program.
+# In this case multi-user.target is used to specify that your program
+# is to be started when the system reaches what used to be called runlevel2,
+# i.e. the system is loaded enough to run multi-user consoles, but not a GUI.
+
+# Other runlevel targets are:
+# Run Level      Target Units                            Description
+# 0               runlevel0.target, poweroff.target       Shut down and power off
+# 1               runlevel1.target, rescue.target         Set up a rescue shell
+# 2,3,4           runlevel[234].target, multi-user.target Set up a non-gfx multi-user shell
+# 5               runlevel5.target, graphical.target      Set up a gfx multi-user shell
+# 6               runlevel6.target, reboot.target         Shut down and reboot the system
+
+# It is also worth knowing that systemd is the first program to run after the kernel
+# has been loaded and the file system has been set up. Notice that systemd also supports
+# mount and device units which will perform what you might think were low level
+# configuration after the kernel has loaded.
+#
+# WantedBy says that the target needs the program started, but nothing will happen
+# if it doesn't start. You can also use Required by to state a hard dependence where
+# the target will shut down if the unit doesn't start.
+#
+# There are many more options that can be used to specify dependencies and the order
+# that units should be started in or restarted. The unit file listed above is a
+# simple example to get you started on using systemd.
+
+
