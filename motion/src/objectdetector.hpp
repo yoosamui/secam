@@ -80,38 +80,38 @@ class Objectdetector : public ofThread
         Mat rgb;
         img.copyTo(rgb);
 
-        common::bgr2rgb(rgb);
+        //    common::bgr2rgb(rgb);
+        /*
+                float m_sx = static_cast<float>(INPUT_WIDTH * 100 / 320) / 100;
+                float m_sy = static_cast<float>(INPUT_HEIGHT * 100 / 240) / 100;
 
-        float m_sx = static_cast<float>(INPUT_WIDTH * 100 / 320) / 100;
-        float m_sy = static_cast<float>(INPUT_HEIGHT * 100 / 240) / 100;
+                ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
 
-        ofPolyline poly = ofPolyline::fromRectangle(toOf(r));
+                poly.scale(m_sx, m_sy);
+                Rect scaled_rect(toCv(poly.getBoundingBox()));
 
-        poly.scale(m_sx, m_sy);
-        Rect scaled_rect(toCv(poly.getBoundingBox()));
+                Rect inflated_rec = Rect(scaled_rect.x, scaled_rect.y, 320, 320);
 
-        Rect inflated_rec = Rect(scaled_rect.x, scaled_rect.y, 320, 320);
+                int move = 40;
 
-        int move = 40;
+                inflated_rec.x -= move;
+                if (inflated_rec.x < 0) inflated_rec.x = 0;
 
-        inflated_rec.x -= move;
-        if (inflated_rec.x < 0) inflated_rec.x = 0;
+                inflated_rec.y -= move;
+                if (inflated_rec.y < 0) inflated_rec.y = 0;
 
-        inflated_rec.y -= move;
-        if (inflated_rec.y < 0) inflated_rec.y = 0;
+                if (inflated_rec.x + inflated_rec.width > rgb.cols) {
+                    inflated_rec.x -= (scaled_rect.x + inflated_rec.width) - rgb.cols;
+                }
 
-        if (inflated_rec.x + inflated_rec.width > rgb.cols) {
-            inflated_rec.x -= (scaled_rect.x + inflated_rec.width) - rgb.cols;
-        }
+                if (inflated_rec.y + inflated_rec.height > rgb.rows) {
+                    inflated_rec.y -= (scaled_rect.y + inflated_rec.height) - rgb.rows;
+                }
 
-        if (inflated_rec.y + inflated_rec.height > rgb.rows) {
-            inflated_rec.y -= (scaled_rect.y + inflated_rec.height) - rgb.rows;
-        }
-
-        Mat result = Mat::zeros(INPUT_WIDTH, INPUT_HEIGHT, CV_8UC3);
-        rgb(inflated_rec).copyTo(result(inflated_rec));
-
-        m_frames.push_back(make_tuple(result, rgb));
+                Mat result = Mat::zeros(INPUT_WIDTH, INPUT_HEIGHT, CV_8UC3);
+                rgb(inflated_rec).copyTo(result(inflated_rec));
+        */
+        m_frames.push_back(make_tuple(rgb, rgb));
     }
 
     void detect()

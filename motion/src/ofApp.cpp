@@ -46,7 +46,7 @@ void ofApp::setup()
     ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
 
     // recording stop timex
-    m_timex_stoprecording.setLimit(30000);
+    m_timex_stoprecording.setLimit(5000);
     m_timex_second.setLimit(1000);
     m_timex_recording_point.setLimit(1000);
 
@@ -256,10 +256,13 @@ string& ofApp::getStatusInfo()
     // clang-format off
 
     char buf[512];
-    sprintf(buf,"FPS/Frame: %2.2f / %lu q:%.3d [ %3d, %3d, %3d, %3d ] v:%2d",
+    sprintf(buf,"%s %dx%d FPS/Frame: %2.2f / %lu Q:%.3d [ %3d, %3d, %3d, %3d ] v:%2d",
+            m_cam.getCodeName().c_str(),
+            (int)m_cam.getSize().width,
+            (int)m_cam.getSize().height,
              ofGetFrameRate(),
              m_frame_number,
-            (int) m_writer.get_queue().size(),
+            (int)m_writer.get_queue().size(),
              m_config.settings.minthreshold,
              m_config.settings.minrectwidth,
              m_config.settings.mincontoursize,
