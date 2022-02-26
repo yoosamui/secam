@@ -43,6 +43,13 @@ class Objectdetector : public ofThread
         float confidence;
         Rect box;
     };
+    // clang-format off
+    map<string, Scalar> color_map = {
+        {"person", Scalar(0, 255, 255)},
+        {"motorbike", Scalar(255, 255, 0)},
+        {"car", Scalar(0, 255, 0)}
+    };
+    // clang-format on
 
     const vector<Scalar> colors = {Scalar(0, 255, 0)};
 
@@ -141,6 +148,13 @@ class Objectdetector : public ofThread
         m_block_add = false;
         m_detected = false;
         m_processing = true;
+    }
+
+    Scalar get_color(const string &name)
+    {
+        if (color_map.count(name) == 0) return Scalar(255, 255, 255);
+
+        return color_map[name];
     }
 
     string get_filepath(const string &extension)
@@ -281,15 +295,18 @@ class Objectdetector : public ofThread
             output.push_back(result);
         }
 
+        cout << "..............." << output.size() << endl;
         return draw(base, output) != 0;
     }
 
     bool draw(const Mat &frame, vector<Detection> &output)
     {
+        int detections = output.size();
+        if (!detections) return false;
+
         Mat input;
         frame.copyTo(input);
 
-        int detections = output.size();
         bool found = false;
 
         for (int c = 0; c < detections; ++c) {
@@ -297,8 +314,7 @@ class Objectdetector : public ofThread
 
             auto box = detection.box;
             auto classId = detection.class_id;
-
-            const auto color = colors[classId % colors.size()];
+            auto color = get_color(m_classes[classId]);
 
             if (!found) found = m_classes[classId] == "person";
 
@@ -332,12 +348,12 @@ class Objectdetector : public ofThread
 
         r.width += size * 2;
         if (r.x + r.width > frame.cols) {
-            r.x = (r.x + r.width) - frame.cols;
+            r.x -= (r.x + r.width) - frame.cols;
         }
 
         r.height += size * 2;
         if (r.y + r.height > frame.rows) {
-            r.y = (r.y + r.height) - frame.rows;
+            r.y -= (r.y + r.height) - frame.rows;
         }
 
         return r;
