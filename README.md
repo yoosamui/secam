@@ -36,7 +36,7 @@ https://docs.opencv.org/4.5.1/d7/d9f/tutorial_linux_install.html
 ```
 
 step 2:
-install OF, OpenCV and secam
+install OF and secam
 
 ```bash
 We need to get OF 0.11.2 from [here](https://openframeworks.cc/download/)
