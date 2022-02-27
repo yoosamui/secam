@@ -29,12 +29,10 @@ You will need the folowing libraries on your system:
 
 ## installation
 step 1:
-install compiler and  dependencies.
+install OpenCV 4.5.1+
 
 ```bash
-$ sudo apt update
-$ sudo apt install build-essential
-
+https://docs.opencv.org/4.5.1/d7/d9f/tutorial_linux_install.html
 ```
 
 step 2:
@@ -51,7 +49,7 @@ of_v0.11.2_linux64gcc6_release.tar.gz
 For Raspberry PI OS 32 Bits
 of_v0.11.2_linuxarmv6l_release.tar.gz
 
-extract the Downloaded OF archive in. (e.g asumme /home/user/develop) as the OF target directory.
+extract the OF archive in. (e.g asumme /home/user/develop) as the OF target directory.
 
 cd to the OF framework apps directory:
 cd /home/user/develop/of_v0.11.2_linuxXXX_release/apps
@@ -143,12 +141,6 @@ start the secam service
 
 sudo systemctl start secam-motion.service
 systemctl status secam-motion.service
-
-
-
-
-
-
 
 
 
