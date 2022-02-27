@@ -315,7 +315,7 @@ class Objectdetector : public ofThread
 
             if (!found) found = m_classes[classId] == "person";
 
-            Rect r = inflate(box, 20, input);
+            Rect r = box;  // inflate(box, 20, input);
 
             rectangle(input, r, color, 2);
             rectangle(input, Point(r.x - 1, r.y - 20), cv::Point(r.x + r.width, r.y), color,
