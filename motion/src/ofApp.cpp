@@ -7,6 +7,8 @@
 #include "constants.h"
 #include "factory.hpp"
 
+const int VIDEO_DURATION_MILLIS = 30000;
+
 //--------------------------------------------------------------
 void ofApp::setup()
 {
@@ -46,7 +48,7 @@ void ofApp::setup()
     ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
 
     // recording stop timex
-    m_timex_stoprecording.setLimit(5000);
+    m_timex_stoprecording.setLimit(VIDEO_DURATION_MILLIS);
     m_timex_second.setLimit(1000);
     m_timex_recording_point.setLimit(1000);
 
@@ -79,6 +81,11 @@ void ofApp::update()
         m_connected = false;
         return;
     }
+
+    // if (!m_cam.get_Frame(m_frame)) {
+    // m_connected = false;
+    // return;
+    //}
 
     // 15 frames time to stabilization.
     if (m_frame_number++ < 15 || !m_processing) return;

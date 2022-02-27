@@ -21,6 +21,19 @@ class Camera : public cv::VideoCapture
         return open(uri, CAP_FFMPEG);
     }
 
+    bool get_Frame(Mat& frame)
+    {
+        try {
+            return read(frame);
+        } catch (const std::runtime_error& r) {
+            std::cout << r.what();
+        } catch (const std::exception& e) {
+            std::cout << e.what();
+        }
+
+        return false;
+    }
+
     Size getSize()
     {
         //
@@ -54,4 +67,5 @@ class Camera : public cv::VideoCapture
     }
 
   private:
+    Mat m_frame;
 };
