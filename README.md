@@ -7,6 +7,8 @@ With great libraries like openFrameworks, OpenCV and yolo is posible to create t
 
 More info about OF [here](https://openframeworks.cc/)
 
+![live stream from gate camera](github.com/yoosamui/secam/blob/main/motion/bin/data/images/gate.png)
+
 ## Target platforms
 Android   (comming soon)
 Mac OS    (comming soon)
