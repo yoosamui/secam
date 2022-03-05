@@ -1,7 +1,6 @@
 # Camera surveillance with OF and OpenCv
 
-Real-time streaming to interact with our environment.
-Using CCTV cameras and combine the great technology available today.
+Real-time streaming Using CCTV.
 
 secam is a small project about using live stream from IP cameras. 
 With great libraries like openFrameworks, OpenCV and yolo is posible to create this Surveillance aproach in short time.
