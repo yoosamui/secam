@@ -118,8 +118,16 @@ cd /home/user/develop/of_v0.11.2_linuxXXX_release/apps/secam/motion/bin/
 
 ./motion -c=cam1
 
-
 ```
+
+create a mask
+press 1 to change the view in mask edit mode.
+![create a mask for the gate camera](github.com/yoosamui/secam/blob/main/motion/bin/data/images/gate_mask_1.png)
+Press F5 to start create a new mask.
+select the polygon points with left mouse click and finish/close the polygon with right mouse click.
+![shows the mask for the gate camera](github.com/yoosamui/secam/blob/main/motion/bin/data/images/gate_mask_2.png)
+This will save the mask in the config file.
+
 
 step 4:
 Install systemctl server for the raspberry pi
