@@ -167,12 +167,6 @@ sudo systemctl enable secam-motion.service
 
 reboot your RPI
 
-
-
-
-
-
-
-
-
 ```
+
+in development...
