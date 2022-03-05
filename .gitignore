@@ -18,6 +18,7 @@ obj/
 *.cfg
 *.xml
 bin/secam
+bin/motion
 *.log
 server
 
