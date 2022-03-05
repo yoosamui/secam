@@ -121,7 +121,7 @@ cd /home/user/develop/of_v0.11.2_linuxXXX_release/apps/secam/motion/bin/
 ```
 
 create a mask
-press 1 to change the view in mask edit mode.
+press 2 to change the view in mask edit mode.
 ![create a mask for the gate camera](https://github.com/yoosamui/secam/blob/main/motion/bin/data/images/gate_mask_1.png)
 
 Press F5 to start create a new mask.
@@ -129,6 +129,8 @@ select the polygon points with left mouse click and finish/close the polygon wit
 ![shows the mask for the gate camera](https://github.com/yoosamui/secam/blob/main/motion/bin/data/images/gate_mask_2.png)
 
 This will save the mask in the config file.
+press 1 to return to live view.
+press i to turn on/off the mask polygon in the live view
 
 
 step 4:
