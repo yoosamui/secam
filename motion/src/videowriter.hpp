@@ -55,6 +55,8 @@ class Videowriter : public ofThread, public VideoWriter
             try {
                 if (boost::filesystem::exists(s)) {
                     boost::filesystem::copy(s, d);
+                    common::log("copy " + s, +" to " + d);
+
                     boost::filesystem::remove(s);
                 }
 
