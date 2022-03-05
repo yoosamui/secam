@@ -1,6 +1,6 @@
 [Unit]
 Description=secam-motion service
-#After=network.target
+After=network.target
 #StartLimitIntervalSec=0
 
 #[Timer]
@@ -47,17 +47,16 @@ StartLimitIntervalSec=10
 # in this case by killing the process that is running your program.
 KillMode=process
 
-User=yoo
+#User=pi
 #Group=root
 
-#User=yoo
 #Environment=LD_LIBRARY_PATH=:/usr/local/lib
 #WorkingDirectory=/usr/local/bin
 
 # The final section tells systemd when to start your program running:
 [Install]
-#WantedBy=multi-user.target
-WantedBy=graphical.target
+WantedBy=multi-user.target
+#WantedBy=graphical.target
 
 # this specifies which other units or targets depend on your program.
 # In this case multi-user.target is used to specify that your program
