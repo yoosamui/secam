@@ -82,12 +82,7 @@ void ofApp::update()
         return;
     }
 
-    // if (!m_cam.get_Frame(m_frame)) {
-    // m_connected = false;
-    // return;
-    //}
-
-    // 15 frames time to stabilization.
+    // 15 frames time for stabilization.
     if (m_frame_number++ < 15 || !m_processing) return;
 
     // TODO config setting

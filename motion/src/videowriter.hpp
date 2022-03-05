@@ -90,7 +90,7 @@ class Videowriter : public ofThread, public VideoWriter
             int apiID = cv::CAP_FFMPEG;
             int codec = VideoWriter::fourcc('X', '2', '6', '4');
 
-            double fps = 25;
+            double fps = 25.0;
 
             bool isColor = (src.type() == CV_8UC3);
 
@@ -103,7 +103,7 @@ class Videowriter : public ofThread, public VideoWriter
 
             // Current quality (0..100%) of the encoded videostream.
             // Can be adjusted dynamically in some codecs.
-            set(VIDEOWRITER_PROP_QUALITY, 80);
+            set(VIDEOWRITER_PROP_QUALITY, 100);
         }
 
         return result;
