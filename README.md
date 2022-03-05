@@ -89,19 +89,23 @@ Create a config file in the folowing folder:
 cp /home/user/develop/of_v0.11.2_linuxXXX_release/apps/secam/motion/bin/data
 nano cam1.cfg
 
-paste this content and modify the uri.
+paste this content and modify the elements.
 
 <config>
-<!--- EXAMPLE
-<uri>rtsp://USERNAME:PASSWORD@IP:PORT/LINK_TO_STREAM</uri>
----->
 
-<uri>rtsp://admin:12345@my.camera.com:554/Streaming/channels/102</uri>
+<!-- use a substream with medium resolution e.g 640x360 or 640x460 gives you accurate videos at 25 fps and medium CPU usage -->
+<uri>rtsp://user:password@my.camera.com:554/Streaming/channels/102</uri>
+
+<!-- enter the timezone where the camera is located -->
+<timezone>Asia/Bangkok</timezone>
+
+<!-- enter the storage location for the videos -->
+<storage>/media/share/cameras/</storage>
 
 
 </config
 ```
-
+set your camera frame rate at 25 fps.
 
 Make sure that the url works. you can check it with VLC or ffplay.
 
@@ -134,12 +138,28 @@ change the directories:
 ExecStart=/home/user/develop/of_v0.11.2_linuxXXX_release/apps/secam/motion/bin/motion -c=cam1 -m=1
 WorkingDirectory=/home/user/develop/of_v0.11.2_linuxXXX_release/apps/secam/motion/bin
 
+set the user e.g pi
+User=pi
+
 save it.
 
 start the secam service
 
 sudo systemctl start secam-motion.service
 systemctl status secam-motion.service
+
+enable the service for autostart
+sudo chmod 664 /etc/systemd/system/secam-motion.service
+sudo systemctl daemon-reload
+sudo systemctl enable secam-motion.service 
+
+reboot your RPI
+
+
+
+
+
+
 
 
 
