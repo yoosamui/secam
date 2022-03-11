@@ -89,6 +89,12 @@ void ofApp::update()
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty()) {
+        m_timestamp = common::getTimestamp(m_config.settings.timezone);
+        this->drawTimestamp();
+
+        // add frame to writer
+        m_writer.add(m_frame);
+
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
         if (m_lowframerate) {
             common::log("low frame rate " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
@@ -96,12 +102,6 @@ void ofApp::update()
             m_frame_number = 0;
             return;
         }
-
-        m_timestamp = common::getTimestamp(m_config.settings.timezone);
-        this->drawTimestamp();
-
-        // add frame to writer
-        m_writer.add(m_frame);
 
         if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
             cv::resize(m_frame, m_resized, cv::Size(m_cam_width, m_cam_height));
