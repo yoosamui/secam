@@ -94,7 +94,7 @@ void ofApp::update()
             common::log("low frame rate " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
             // m_reconnect = true;
             m_frame_number = 0;
-            //    return;
+            return;
         }
 
         m_timestamp = common::getTimestamp(m_config.settings.timezone);
