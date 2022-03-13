@@ -29,7 +29,7 @@ class Videowriter : public ofThread, public VideoWriter
         if (!m_processing) {
             // make space for new frames
             if (m_queue.size() > QUEUE_MAX_SIZE) {
-                for (int i = 0; i < m_config.parameters.fps; i++) {
+                for (int i = 0; i < QUEUE_MAX_SIZE / 2; i++) {
                     m_queue.pop();
                 }
                 return;
