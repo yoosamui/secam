@@ -14,7 +14,7 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = 80;
+const uint16_t QUEUE_MAX_SIZE = 100;
 
 class Videowriter : public ofThread, public VideoWriter
 {
@@ -28,11 +28,10 @@ class Videowriter : public ofThread, public VideoWriter
     {
         if (!m_processing) {
             // make space for new frames
-            if (m_queue.size() > QUEUE_MAX_SIZE) {
-                for (int i = 0; i < QUEUE_MAX_SIZE / 2; i++) {
+            if (m_queue.size() >= QUEUE_MAX_SIZE) {
+                for (int i = 0; i < QUEUE_MAX_SIZE / 3; i++) {
                     m_queue.pop();
                 }
-                return;
             }
 
             // release video writer to avoid lookahead thread error.
