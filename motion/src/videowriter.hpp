@@ -27,16 +27,16 @@ class Videowriter : public ofThread, public VideoWriter
     void add(const cv::Mat& img)
     {
         if (!m_processing) {
-            /*// make space for new frames
+            // make space for new frames
             if (m_queue.size() >= QUEUE_MAX_SIZE) {
                 for (int i = 0; i < QUEUE_MAX_SIZE / 3; i++) {
                     m_queue.pop();
                 }
-            }*/
+            }
 
-            // release video writer to avoid lookahead thread error.
             return;
-            release();
+            // release video writer to avoid lookahead thread error.
+            // release();
         }
 
         Mat rgb;
