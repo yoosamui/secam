@@ -43,7 +43,7 @@ class Videowriter : public ofThread, public VideoWriter
         img.copyTo(rgb);
         common::bgr2rgb(rgb);
 
-        m_queue.push(rgb);
+        m_queue.push(rgb.clone());
     }
 
     bool stop()
