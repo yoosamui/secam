@@ -118,7 +118,7 @@ void ofApp::update()
             if (!m_recording) {
                 this->saveDetectionImage();
 
-                ////        m_detector.start();
+                m_detector.start();
 
                 auto m_videofilename = m_writer.start("motion_");
 
