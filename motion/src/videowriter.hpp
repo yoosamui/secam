@@ -34,7 +34,7 @@ class Videowriter : public ofThread, public VideoWriter
                 }
             }
 
-            return;
+            //            return;
             // release video writer to avoid lookahead thread error.
             // release();
         }
