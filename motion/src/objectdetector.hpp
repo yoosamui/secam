@@ -88,12 +88,14 @@ class Objectdetector : public ofThread
     void detect()
     {
         m_block_add = true;
+        if(m_frames.size())
         common::log("Start add to queue :" + to_string(m_frames.size()));
+
         int i = 0;
         for (auto &frame : m_frames) {
             if (m_detected) break;
 
-            common::log("Add to queue :" + to_string(i));
+           common::log("Add to queue :" + to_string(i));
             m_queue.push(frame.clone());
             i++;
         }

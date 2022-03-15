@@ -27,16 +27,16 @@ class Videowriter : public ofThread, public VideoWriter
     void add(const cv::Mat& img)
     {
         if (!m_processing) {
+
             // make space for new frames
             if (m_queue.size() >= QUEUE_MAX_SIZE) {
-                for (int i = 0; i < QUEUE_MAX_SIZE / 3; i++) {
+                for (int i = 0; i < QUEUE_MAX_SIZE / 2; i++) {
                     m_queue.pop();
                 }
             }
 
-            //            return;
-            // release video writer to avoid lookahead thread error.
-            // release();
+ //            release();
+//             return;
         }
 
         Mat rgb;
@@ -82,7 +82,7 @@ class Videowriter : public ofThread, public VideoWriter
     string start(const string& prefix)
     {
         string result;
-        m_processing = true;
+
 
         if (m_queue.size()) {
             //  This returns a reference to the first element of the queue,
@@ -101,11 +101,14 @@ class Videowriter : public ofThread, public VideoWriter
             string filename = get_filepath(prefix + m_config.parameters.camname, ".mkv");
             result = filename;
 
+            common::log("create video file = " + filename);
             open(filename, apiID, codec, fps, src.size(), isColor);
 
             // Current quality (0..100%) of the encoded videostream.
             // Can be adjusted dynamically in some codecs.
             set(VIDEOWRITER_PROP_QUALITY, 100);
+
+            m_processing = true;
         }
 
         return result;
@@ -148,9 +151,9 @@ class Videowriter : public ofThread, public VideoWriter
     void threadedFunction()
     {
         while (isThreadRunning()) {
-            while (!m_queue.empty() && m_processing) {
+            while (!m_queue.empty() && m_processing ) {
                 Mat img = m_queue.front();
-                if (!img.empty()) {
+                if (!img.empty() ) {
                     write(img);
                 }
 
