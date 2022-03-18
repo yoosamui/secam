@@ -30,7 +30,7 @@ class Objectdetector : public ofThread
     const float INPUT_HEIGHT = 640.0;
     const float SCORE_THRESHOLD = 0.2;
     const float NMS_THRESHOLD = 0.4;
-    const float CONFIDENCE_THRESHOLD = 0.5;
+    const float CONFIDENCE_THRESHOLD = 0.7; //0.5;
 
     const string m_title = "PERSON_";
 

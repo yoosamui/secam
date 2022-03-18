@@ -117,10 +117,11 @@ void ofApp::update()
             // create video
             if (!m_recording) {
 
-                auto m_videofilename = m_writer.start("motion_");
+                string m_videofilename = m_writer.start("motion_");
                 if(m_videofilename.empty()) return;
 
                 this->saveDetectionImage();
+
                 m_detector.start();
 
                 common::log("START RECORDING "+ m_videofilename);
@@ -166,7 +167,10 @@ void ofApp::update()
             }
 
             if (m_timex_stoprecording.elapsed()) {
+                // stop and close video writer
                 m_writer.stop();
+                m_writer.close();
+
                 common::log("FINISH RECORDING.");
 
                 m_detector.detect();

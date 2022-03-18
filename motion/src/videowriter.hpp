@@ -34,9 +34,6 @@ class Videowriter : public ofThread, public VideoWriter
                     m_queue.pop();
                 }
             }
-
- //            release();
-//             return;
         }
 
         Mat rgb;
@@ -46,7 +43,15 @@ class Videowriter : public ofThread, public VideoWriter
         m_queue.push(rgb.clone());
     }
 
-    bool stop()
+    void close()
+    {
+        ofSleepMillis(200);
+
+        // Closes the video writer.
+        release();
+    }
+
+    void stop()
     {
         /*if (boost::filesystem::exists(string(TMPDIR))) {
             const string s = m_source_dir + m_file;
@@ -74,9 +79,7 @@ class Videowriter : public ofThread, public VideoWriter
         }*/
 
         m_processing = false;
-        release();
 
-        return true;
     }
 
     string start(const string& prefix)
