@@ -30,8 +30,7 @@ void ofApp::setup()
 
     ss << "Configuration:\n"
        << "uri = " << m_config.settings.uri << "\n"
-       << "host = " << m_config.settings.host << "\n"
-       << "port = " << m_config.settings.port << "\n"
+       << "cam = " << m_config.parameters.camname << "\n"
        << "timezone = " << m_config.settings.timezone << "\n"
        << "storage = " << m_config.settings.storage << "\n"
        << "minarearadius = " << m_config.settings.minarearadius << "\n"
@@ -89,6 +88,12 @@ void ofApp::update()
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty()) {
+        m_timestamp = common::getTimestamp(m_config.settings.timezone);
+        this->drawTimestamp();
+
+        // add frame to writer
+        m_writer.add(m_frame);
+
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
         if (m_lowframerate) {
             common::log("low frame rate " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
@@ -96,12 +101,6 @@ void ofApp::update()
             m_frame_number = 0;
             return;
         }
-
-        m_timestamp = common::getTimestamp(m_config.settings.timezone);
-        this->drawTimestamp();
-
-        // add frame to writer
-        m_writer.add(m_frame);
 
         if (m_frame.size().width != m_cam_width || m_frame.size().height != m_cam_height) {
             cv::resize(m_frame, m_resized, cv::Size(m_cam_width, m_cam_height));
@@ -116,20 +115,18 @@ void ofApp::update()
         if (m_motion_detected) {
             // create video
             if (!m_recording) {
+                this->saveDetectionImage();
 
                 string m_videofilename = m_writer.start("motion_");
-                if(m_videofilename.empty()) return;
-
-                this->saveDetectionImage();
+                if (m_videofilename.empty()) return;
 
                 m_detector.start();
 
-                common::log("START RECORDING "+ m_videofilename);
+                common::log("START RECORDING " + m_videofilename);
 
-
-                //stringstream ss;
-                //ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
-                //common::log(ss.str());
+                // stringstream ss;
+                // ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+                // common::log(ss.str());
 
                 ofResetElapsedTimeCounter();
                 m_recording = true;
@@ -142,11 +139,10 @@ void ofApp::update()
             m_motion_detected = false;
 
         } else if (m_manual_recording && !m_recording) {
-
             // start recording
             auto m_videofilename = m_writer.start("recording_");
 
-            if(m_videofilename.empty()) return;
+            if (m_videofilename.empty()) return;
 
             m_manual_recording = false;
             stringstream ss;

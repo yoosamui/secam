@@ -27,7 +27,6 @@ class Videowriter : public ofThread, public VideoWriter
     void add(const cv::Mat& img)
     {
         if (!m_processing) {
-
             // make space for new frames
             if (m_queue.size() >= QUEUE_MAX_SIZE) {
                 for (int i = 0; i < QUEUE_MAX_SIZE / 2; i++) {
@@ -45,15 +44,13 @@ class Videowriter : public ofThread, public VideoWriter
 
     void close()
     {
-        ofSleepMillis(200);
-
         // Closes the video writer.
         release();
     }
 
     void stop()
     {
-        /*if (boost::filesystem::exists(string(TMPDIR))) {
+        if (boost::filesystem::exists(string(TMPDIR))) {
             const string s = m_source_dir + m_file;
             const string d = m_destination_dir + m_file;
 
@@ -76,16 +73,14 @@ class Videowriter : public ofThread, public VideoWriter
             } catch (boost::filesystem::filesystem_error& e) {
                 common::log(e.what(), OF_LOG_ERROR);
             }
-        }*/
+        }
 
         m_processing = false;
-
     }
 
     string start(const string& prefix)
     {
         string result;
-
 
         if (m_queue.size()) {
             //  This returns a reference to the first element of the queue,
@@ -123,9 +118,9 @@ class Videowriter : public ofThread, public VideoWriter
         m_source_dir = m_destination_dir =
             m_config.settings.storage + common::getTimestamp(m_config.settings.timezone, "%F");
 
-        /*if (boost::filesystem::exists(string(TMPDIR))) {
+        if (boost::filesystem::exists(string(TMPDIR))) {
             m_source_dir = string(TMPDIR) + common::getTimestamp(m_config.settings.timezone, "%F");
-        }*/
+        }
 
         try {
             boost::filesystem::create_directory(m_source_dir);
@@ -154,9 +149,9 @@ class Videowriter : public ofThread, public VideoWriter
     void threadedFunction()
     {
         while (isThreadRunning()) {
-            while (!m_queue.empty() && m_processing ) {
+            while (!m_queue.empty() && m_processing) {
                 Mat img = m_queue.front();
-                if (!img.empty() ) {
+                if (!img.empty()) {
                     write(img);
                 }
 
