@@ -39,12 +39,13 @@ class Videowriter : public ofThread, public VideoWriter
         img.copyTo(rgb);
         common::bgr2rgb(rgb);
 
-        m_queue.push(rgb.clone());
+        m_queue.push(rgb);
     }
 
     void close()
     {
         // Closes the video writer.
+        ofSleepMillis(10);
         release();
     }
 
@@ -154,8 +155,8 @@ class Videowriter : public ofThread, public VideoWriter
                 if (!img.empty()) {
                     write(img);
                 }
-
                 m_queue.pop();
+                img.release();
             }
 
             ofSleepMillis(10);

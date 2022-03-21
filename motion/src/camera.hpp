@@ -55,6 +55,12 @@ class Camera : public cv::VideoCapture
         return EXT;
     }
 
+    float getFPS()
+    {
+        //
+        return get(CAP_PROP_FPS);
+    }
+
     string toString()
     {
         stringstream ss;

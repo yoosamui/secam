@@ -37,6 +37,7 @@ class ofApp : public ofBaseApp
     void drawTimestamp();
     void on_motion(Rect& r);
     void on_motion_detected(Rect& r);
+    void on_finish_detections(int& count);
     void saveDetectionImage();
 
     string& getStatusInfo();

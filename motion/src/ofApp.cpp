@@ -45,6 +45,7 @@ void ofApp::setup()
     m_motion.init();
     ofAddListener(m_motion.on_motion, this, &ofApp::on_motion);
     ofAddListener(m_motion.on_motion_detected, this, &ofApp::on_motion_detected);
+    ofAddListener(m_detector.on_finish_detections, this, &ofApp::on_finish_detections);
 
     // recording stop timex
     m_timex_stoprecording.setLimit(VIDEO_DURATION_MILLIS);
@@ -88,6 +89,12 @@ void ofApp::update()
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty()) {
+        m_timestamp = common::getTimestamp(m_config.settings.timezone);
+        this->drawTimestamp();
+
+        // add frame to writer
+        m_writer.add(m_frame);
+
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
         if (m_lowframerate) {
             common::log("low frame rate " + to_string(ofGetFrameRate()), OF_LOG_WARNING);
@@ -101,12 +108,6 @@ void ofApp::update()
         } else {
             m_frame.copyTo(m_resized);
         }
-
-        m_timestamp = common::getTimestamp(m_config.settings.timezone);
-        this->drawTimestamp();
-
-        // add frame to writer
-        m_writer.add(m_frame);
 
         // process motion
         m_detected.clear();
@@ -169,6 +170,8 @@ void ofApp::update()
 
                 common::log("FINISH RECORDING.");
 
+                // not procesing util detector finish.
+                m_processing = false;
                 m_detector.detect();
 
                 m_recording_duration = VIDEODURATION;
@@ -264,10 +267,11 @@ string& ofApp::getStatusInfo()
     // clang-format off
 
     char buf[512];
-    sprintf(buf,"%s %dx%d FPS/Frame: %2.2f / %lu Q:%.3d [ %3d, %3d, %3d, %3d ] v:%2d",
+    sprintf(buf,"%s %dx%d FPS/Frame: %2.2f/%2.2f / %lu Q:%.3d [ %3d, %3d, %3d, %3d ] v:%2d",
             m_cam.getCodeName().c_str(),
             (int)m_cam.getSize().width,
             (int)m_cam.getSize().height,
+            m_cam.getFPS(),
              ofGetFrameRate(),
              m_frame_number,
             (int)m_writer.get_queue().size(),
@@ -291,6 +295,12 @@ void ofApp::on_motion_detected(Rect& r)
     m_detector.add(m_frame, r);
 }
 
+//--------------------------------------------------------------
+void ofApp::on_finish_detections(int& count)
+{
+    m_processing = true;
+    common::log("Finish detections :" + to_string(count));
+}
 //--------------------------------------------------------------
 void ofApp::on_motion(Rect& r)
 {

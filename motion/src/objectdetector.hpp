@@ -30,7 +30,7 @@ class Objectdetector : public ofThread
     const float INPUT_HEIGHT = 640.0;
     const float SCORE_THRESHOLD = 0.2;
     const float NMS_THRESHOLD = 0.4;
-    const float CONFIDENCE_THRESHOLD = 0.7; //0.5;
+    const float CONFIDENCE_THRESHOLD = 0.7;  // 0.5;
 
     const string m_title = "PERSON_";
 
@@ -48,6 +48,8 @@ class Objectdetector : public ofThread
     // clang-format on
 
   public:
+    ofEvent<int> on_finish_detections;
+
     Objectdetector()
     {
         ifstream ifs("data/classes.txt");
@@ -71,8 +73,7 @@ class Objectdetector : public ofThread
 
     void add(const Mat &img, const Rect &r)
     {
-        if (m_frames.size() > 10 || ++m_frame_number % 3 || img.empty() || !m_processing ||
-            m_block_add) {
+        if (m_frames.size() > 10 || ++m_frame_number % 3 || img.empty() || m_block_add) {
             return;
         }
 
@@ -87,16 +88,17 @@ class Objectdetector : public ofThread
 
     void detect()
     {
+        m_processing = true;
         m_block_add = true;
-        if(m_frames.size())
-        common::log("Start add to queue :" + to_string(m_frames.size()));
+        if (m_frames.size()) common::log("Detected frames count :" + to_string(m_frames.size()));
 
-        int i = 0;
+        int i = 1;
         for (auto &frame : m_frames) {
             if (m_detected) break;
 
-           common::log("Add to queue :" + to_string(i));
+            common::log("Add to queue :" + to_string(i));
             m_queue.push(frame.clone());
+            frame.release();
             i++;
         }
 
@@ -106,6 +108,7 @@ class Objectdetector : public ofThread
     void start()
     {
         reset();
+
         m_filename = get_filepath(m_config.parameters.camname + ".jpg");
     }
 
@@ -147,7 +150,6 @@ class Objectdetector : public ofThread
 
         m_block_add = false;
         m_detected = false;
-        m_processing = true;
     }
 
     Scalar get_color(const string &name)
@@ -181,14 +183,18 @@ class Objectdetector : public ofThread
     void threadedFunction()
     {
         vector<Detection> output;
+        int count = 0;
         while (isThreadRunning()) {
+            count = 0;
             while (!m_queue.empty() && m_processing) {
+                count++;
                 common::log("Start detection => " + to_string(m_page));
 
                 output.clear();
                 m_detected = detect(m_queue.front(), output);
 
                 m_queue.pop();
+                count++;
 
                 if (m_detected) {
                     while (!m_queue.empty()) {
@@ -199,6 +205,11 @@ class Objectdetector : public ofThread
                     common::log("!!!Person detected!!!");
                     break;
                 }
+            }
+
+            if (m_processing) {
+                ofNotifyEvent(on_finish_detections, count, this);
+                m_processing = false;
             }
 
             ofSleepMillis(10);
