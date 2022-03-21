@@ -14,7 +14,7 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = 100;
+const uint16_t QUEUE_MAX_SIZE = 160;
 
 class Videowriter : public ofThread, public VideoWriter
 {
