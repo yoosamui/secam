@@ -131,8 +131,6 @@ class Objectdetector : public ofThread
     bool m_block_add = false;
     bool m_detected = false;
 
-    int m_page = 0;
-
     dnn::Net m_net;
 
     Rect m_detection_rect;
@@ -183,12 +181,11 @@ class Objectdetector : public ofThread
     void threadedFunction()
     {
         vector<Detection> output;
-        int count = 0;
+        int count = 1;
         while (isThreadRunning()) {
-            count = 0;
+            count = 1;
             while (!m_queue.empty() && m_processing) {
-                count++;
-                common::log("Start detection => " + to_string(m_page));
+                common::log("Start detection => " + to_string(count));
 
                 output.clear();
                 m_detected = detect(m_queue.front(), output);
@@ -197,10 +194,9 @@ class Objectdetector : public ofThread
                 count++;
 
                 if (m_detected) {
-                    while (!m_queue.empty()) {
+                    do {
                         m_queue.pop();
-                        ofSleepMillis(10);
-                    }
+                    } while (!m_queue.empty());
 
                     common::log("!!!Person detected!!!");
                     break;

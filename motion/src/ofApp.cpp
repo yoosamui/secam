@@ -116,21 +116,18 @@ void ofApp::update()
         if (m_motion_detected) {
             // create video
             if (!m_recording) {
+                m_recording = true;
                 this->saveDetectionImage();
 
-                string m_videofilename = m_writer.start("motion_");
-                if (m_videofilename.empty()) return;
-
+                m_writer.start();
                 m_detector.start();
+                //               common::log("START RECORDING");
 
-                common::log("START RECORDING " + m_videofilename);
-
-                // stringstream ss;
-                // ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
-                // common::log(ss.str());
+                stringstream ss;
+                ss << "RECORDING VIDEO : " << m_statusinfo << endl;
+                common::log(ss.str());
 
                 ofResetElapsedTimeCounter();
-                m_recording = true;
             }
 
             common::log("motion detected");
@@ -141,18 +138,16 @@ void ofApp::update()
 
         } else if (m_manual_recording && !m_recording) {
             // start recording
-            auto m_videofilename = m_writer.start("recording_");
-
-            if (m_videofilename.empty()) return;
-
+            m_recording = true;
             m_manual_recording = false;
+
+            m_writer.start();
+
             stringstream ss;
-            ss << "recording: " + m_videofilename << "\n" << m_statusinfo << endl;
+            ss << "RECORDING VIDEO: " << m_statusinfo << endl;
             common::log(ss.str());
 
             ofResetElapsedTimeCounter();
-            m_recording = true;
-
             m_timex_stoprecording.reset();
         }
 

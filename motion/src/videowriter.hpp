@@ -14,10 +14,10 @@ using namespace ofxCv;
 using namespace cv;
 using namespace std;
 
-const uint16_t QUEUE_MAX_SIZE = 160;
-
 class Videowriter : public ofThread, public VideoWriter
 {
+    const uint16_t QUEUE_MAX_SIZE = 128;
+
   public:
     const queue<Mat>& get_queue() const
     {  //
@@ -26,20 +26,31 @@ class Videowriter : public ofThread, public VideoWriter
 
     void add(const cv::Mat& img)
     {
-        if (!m_processing) {
-            // make space for new frames
-            if (m_queue.size() >= QUEUE_MAX_SIZE) {
-                for (int i = 0; i < QUEUE_MAX_SIZE / 2; i++) {
-                    m_queue.pop();
-                }
-            }
+        if (m_first_frame.empty()) {
+            img.copyTo(m_first_frame);
+            return;
         }
 
         Mat rgb;
         img.copyTo(rgb);
         common::bgr2rgb(rgb);
 
-        m_queue.push(rgb);
+        if (!m_processing) {
+            if (m_queue.size() >= QUEUE_MAX_SIZE) {
+                do {
+                    Mat prior = m_queue.front();
+                    m_queue.pop();
+                    prior.release();
+                } while (!m_queue.empty());
+            }
+
+            m_queue.push(rgb);
+            return;
+        }
+
+        if (m_processing) {
+            write(rgb);
+        }
     }
 
     void close()
@@ -79,38 +90,11 @@ class Videowriter : public ofThread, public VideoWriter
         m_processing = false;
     }
 
-    string start(const string& prefix)
+    void start()
     {
-        string result;
-
-        if (m_queue.size()) {
-            //  This returns a reference to the first element of the queue,
-            //  without removing the element.
-            Mat src = m_queue.front();
-
-            int apiID = cv::CAP_FFMPEG;
-            int codec = VideoWriter::fourcc('X', '2', '6', '4');
-
-            double fps = 25.0;
-
-            bool isColor = (src.type() == CV_8UC3);
-
-            // TODO factory
-            Config& m_config = m_config.getInstance();
-            string filename = get_filepath(prefix + m_config.parameters.camname, ".mkv");
-            result = filename;
-
-            common::log("create video file = " + filename);
-            open(filename, apiID, codec, fps, src.size(), isColor);
-
-            // Current quality (0..100%) of the encoded videostream.
-            // Can be adjusted dynamically in some codecs.
-            set(VIDEOWRITER_PROP_QUALITY, 100);
-
-            m_processing = true;
+        if (!m_first_frame.empty()) {
+            m_create_video_file = true;
         }
-
-        return result;
     }
 
     string get_filepath(const string& prefix, const string& extension, int ret = 0)
@@ -137,7 +121,10 @@ class Videowriter : public ofThread, public VideoWriter
     }
 
   private:
+    Mat m_first_frame;
+
     bool m_processing = false;
+    bool m_create_video_file = false;
 
     string m_source_dir;
     string m_destination_dir;
@@ -150,20 +137,41 @@ class Videowriter : public ofThread, public VideoWriter
     void threadedFunction()
     {
         while (isThreadRunning()) {
-            while (!m_queue.empty() && m_processing) {
-                Mat img = m_queue.front();
-                if (!img.empty()) {
-                    write(img);
-                }
-                m_queue.pop();
-                img.release();
+            while (m_create_video_file) {
+                int apiID = cv::CAP_FFMPEG;
+                int codec = VideoWriter::fourcc('X', '2', '6', '4');
+
+                double fps = 25.0;
+
+                bool isColor = (m_first_frame.type() == CV_8UC3);
+
+                // TODO factory
+                Config& m_config = m_config.getInstance();
+                string filename = get_filepath("motion_" + m_config.parameters.camname, ".mkv");
+                // result = filename;
+
+                common::log("Create video file = " + filename);
+                open(filename, apiID, codec, fps, m_first_frame.size(), isColor);
+
+                // Current quality (0..100%) of the encoded videostream.
+                // Can be adjusted dynamically in some codecs.
+                set(VIDEOWRITER_PROP_QUALITY, 100);
+                m_create_video_file = false;
+
+                do {
+                    Mat prior = m_queue.front();
+                    write(prior);
+                    m_queue.pop();
+                    prior.release();
+
+                } while (!m_queue.empty());
+
+                m_processing = true;
+                break;
             }
 
             ofSleepMillis(10);
         }
-
-        //   When everything done, release the capture
-        release();
     }
 };
 

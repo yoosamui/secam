@@ -14,11 +14,18 @@ using namespace cv;
 class Camera : public cv::VideoCapture
 {
   public:
+    float m_fps = 0.0;
+
+    float getFPS() { return m_fps; }
+
     bool connect(const string& uri)
     {
         cout << "open stream " << uri << endl;
+        bool result = open(uri, CAP_FFMPEG);
+        ofSleepMillis(500);
+        m_fps = get(CAP_PROP_FPS);
 
-        return open(uri, CAP_FFMPEG);
+        return result;
     }
 
     bool get_Frame(Mat& frame)
@@ -55,11 +62,11 @@ class Camera : public cv::VideoCapture
         return EXT;
     }
 
-    float getFPS()
-    {
-        //
-        return get(CAP_PROP_FPS);
-    }
+    // float getFPS()
+    //{
+    ////
+    // return get(CAP_PROP_FPS);
+    //}
 
     string toString()
     {
