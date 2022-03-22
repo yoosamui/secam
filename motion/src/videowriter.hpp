@@ -62,14 +62,14 @@ class Videowriter : public ofThread, public VideoWriter
 
     void stop()
     {
-        if (boost::filesystem::exists(string(TMPDIR))) {
+        /*if (boost::filesystem::exists(string(TMPDIR))) {
             const string s = m_source_dir + m_file;
             const string d = m_destination_dir + m_file;
 
             try {
                 if (boost::filesystem::exists(s)) {
                     boost::filesystem::copy(s, d);
-                    common::log("copy " + s + " to " + d);
+                    //            common::log("copy " + s + " to " + d);
 
                     boost::filesystem::remove(s);
                 }
@@ -85,7 +85,7 @@ class Videowriter : public ofThread, public VideoWriter
             } catch (boost::filesystem::filesystem_error& e) {
                 common::log(e.what(), OF_LOG_ERROR);
             }
-        }
+        }*/
 
         m_processing = false;
     }
@@ -103,9 +103,9 @@ class Videowriter : public ofThread, public VideoWriter
         m_source_dir = m_destination_dir =
             m_config.settings.storage + common::getTimestamp(m_config.settings.timezone, "%F");
 
-        if (boost::filesystem::exists(string(TMPDIR))) {
+        /*if (boost::filesystem::exists(string(TMPDIR))) {
             m_source_dir = string(TMPDIR) + common::getTimestamp(m_config.settings.timezone, "%F");
-        }
+        }*/
 
         try {
             boost::filesystem::create_directory(m_source_dir);
