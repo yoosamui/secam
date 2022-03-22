@@ -121,11 +121,11 @@ void ofApp::update()
 
                 m_writer.start();
                 m_detector.start();
-                //               common::log("START RECORDING");
+                common::log("START RECORDING");
 
-                stringstream ss;
-                ss << "RECORDING VIDEO : " << m_statusinfo << endl;
-                common::log(ss.str());
+                // stringstream ss;
+                // ss << "RECORDING VIDEO : " << m_statusinfo << endl;
+                // common::log(ss.str());
 
                 ofResetElapsedTimeCounter();
             }
