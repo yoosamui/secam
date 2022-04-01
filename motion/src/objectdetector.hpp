@@ -188,12 +188,14 @@ class Objectdetector : public ofThread
                 common::log("Start detection => " + to_string(count));
 
                 output.clear();
-                m_detected = detect(m_queue.front(), output);
+                Mat frame = m_queue.front();
+                m_detected = detect(frame.clone(), output);
 
                 m_queue.pop();
                 count++;
 
                 if (m_detected) {
+                    common::log("detected success.");
                     do {
                         m_queue.pop();
                     } while (!m_queue.empty());

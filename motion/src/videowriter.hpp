@@ -40,7 +40,7 @@ class Videowriter : public ofThread, public VideoWriter
                 do {
                     Mat prior = m_queue.front();
                     m_queue.pop();
-                    prior.release();
+            //        prior.release();
                 } while (!m_queue.empty());
             }
 
@@ -158,13 +158,13 @@ class Videowriter : public ofThread, public VideoWriter
                 set(VIDEOWRITER_PROP_QUALITY, 100);
                 m_create_video_file = false;
 
-                do {
+                /*do {
                     Mat prior = m_queue.front();
                     write(prior);
                     m_queue.pop();
-                    prior.release();
+                //    prior.release();
 
-                } while (!m_queue.empty());
+                } while (!m_queue.empty());*/
 
                 m_processing = true;
                 break;
