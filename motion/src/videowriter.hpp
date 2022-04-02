@@ -40,17 +40,12 @@ class Videowriter : public ofThread, public VideoWriter
                 do {
                     Mat prior = m_queue.front();
                     m_queue.pop();
-            //        prior.release();
+                    //        prior.release();
                 } while (!m_queue.empty());
             }
-
-            m_queue.push(rgb);
-            return;
         }
 
-        if (m_processing) {
-            write(rgb);
-        }
+        m_queue.push(rgb);
     }
 
     void close()
@@ -90,12 +85,7 @@ class Videowriter : public ofThread, public VideoWriter
         m_processing = false;
     }
 
-    void start()
-    {
-        if (!m_first_frame.empty()) {
-            m_create_video_file = true;
-        }
-    }
+    void start() { m_create_video_file = true; }
 
     string get_filepath(const string& prefix, const string& extension, int ret = 0)
     {
@@ -137,8 +127,9 @@ class Videowriter : public ofThread, public VideoWriter
     void threadedFunction()
     {
         while (isThreadRunning()) {
-            while (m_create_video_file) {
+            if (m_create_video_file) {
                 int apiID = cv::CAP_FFMPEG;
+                // int codec = VideoWriter::fourcc('h', 'v', 'c', '1'); // work but crash
                 int codec = VideoWriter::fourcc('X', '2', '6', '4');
 
                 double fps = 25.0;
@@ -157,19 +148,15 @@ class Videowriter : public ofThread, public VideoWriter
                 // Can be adjusted dynamically in some codecs.
                 set(VIDEOWRITER_PROP_QUALITY, 100);
                 m_create_video_file = false;
-
-                /*do {
-                    Mat prior = m_queue.front();
-                    write(prior);
-                    m_queue.pop();
-                //    prior.release();
-
-                } while (!m_queue.empty());*/
-
                 m_processing = true;
-                break;
             }
 
+            while (m_processing && !m_queue.empty()) {
+                Mat prior = m_queue.front();
+                write(prior);
+
+                m_queue.pop();
+            }
             ofSleepMillis(10);
         }
     }
