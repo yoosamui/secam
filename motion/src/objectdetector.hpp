@@ -16,6 +16,7 @@
 #include "ofxCv.h"
 #include "ofxOpenCv.h"
 #include "opencv2/imgcodecs.hpp"
+#include "videowriter.hpp"
 
 using namespace ofxCv;
 using namespace cv;
@@ -30,7 +31,7 @@ class Objectdetector : public ofThread
     const float INPUT_HEIGHT = 640.0;
     const float SCORE_THRESHOLD = 0.2;
     const float NMS_THRESHOLD = 0.4;
-    const float CONFIDENCE_THRESHOLD = 0.7;  // 0.5;
+    const float CONFIDENCE_THRESHOLD = 0.5;
 
     const string m_title = "PERSON_";
 
@@ -73,30 +74,35 @@ class Objectdetector : public ofThread
 
     void add(const Mat &img, const Rect &r)
     {
-        if (m_frames.size() > 10 || ++m_frame_number % 3 || img.empty() || m_block_add) {
+        if (m_frames.size() >= 12 || ++m_frame_number % 3 || img.empty() || m_lock) {
             return;
         }
 
-        common::log("Add detection frame =  " + to_string(r.width) + " x " + to_string(r.height));
+        common::log("Add probe frame =  " + to_string(r.width) + " x " + to_string(r.height));
 
         Mat frame;
         img.copyTo(frame);
         common::bgr2rgb(frame);
 
         m_frames.push_back(frame);
+
+        string filename = m_writer.get_filepath("probe", ".jpg", 1);
+        imwrite(filename, frame);
     }
 
     void detect()
     {
         m_processing = true;
-        m_block_add = true;
-        if (m_frames.size()) common::log("Detected frames count :" + to_string(m_frames.size()));
+        if (m_frames.size()) {
+            m_lock = true;
+            common::log("Detected frames count :" + to_string(m_frames.size()));
+        }
 
-        int i = 1;
+        int i = 0;
         for (auto &frame : m_frames) {
             if (m_detected) break;
 
-            common::log("Add to queue :" + to_string(i));
+            common::log("Add probe to queue :" + to_string(i));
             m_queue.push(frame.clone());
             frame.release();
             i++;
@@ -109,7 +115,7 @@ class Objectdetector : public ofThread
     {
         reset();
 
-        m_filename = get_filepath(m_config.parameters.camname + ".jpg");
+        m_filename = m_writer.get_filepath("PERSON_" + m_config.parameters.camname, ".jpg", 1);
     }
 
     bool detected()
@@ -119,6 +125,7 @@ class Objectdetector : public ofThread
     }
 
   private:
+    Videowriter m_writer;
     Config &m_config = m_config.getInstance();
 
     vector<Mat> m_frames;
@@ -128,7 +135,7 @@ class Objectdetector : public ofThread
 
     bool m_is_cuda = false;
     bool m_processing = false;
-    bool m_block_add = false;
+    bool m_lock = false;
     bool m_detected = false;
 
     dnn::Net m_net;
@@ -146,7 +153,7 @@ class Objectdetector : public ofThread
     {
         m_frames.clear();
 
-        m_block_add = false;
+        m_lock = false;
         m_detected = false;
     }
 
@@ -157,33 +164,13 @@ class Objectdetector : public ofThread
         return color_map[name];
     }
 
-    string get_filepath(const string &extension)
-    {
-        const string timestampt = common::getTimestamp(m_time_zone, "%T");
-        const string timestampf = common::getTimestamp(m_time_zone, "%F");
-
-        m_destination_dir = m_config.settings.storage + timestampf;
-
-        try {
-            boost::filesystem::create_directory(m_destination_dir);
-
-        } catch (boost::filesystem::filesystem_error &e) {
-            cerr << e.what() << endl;
-            return "";
-        }
-
-        m_file = "/" + timestampt + "_" + m_title + extension;
-
-        return m_destination_dir + m_file;
-    }
-
     // override
     void threadedFunction()
     {
         vector<Detection> output;
-        int count = 1;
+        int count;
         while (isThreadRunning()) {
-            count = 1;
+            count = 0;
             while (!m_queue.empty() && m_processing) {
                 common::log("Start detection => " + to_string(count));
 
@@ -195,10 +182,9 @@ class Objectdetector : public ofThread
                 count++;
 
                 if (m_detected) {
-                    common::log("detected success.");
-                    do {
+                    while (!m_queue.empty()) {
                         m_queue.pop();
-                    } while (!m_queue.empty());
+                    }
 
                     common::log("!!!Person detected!!!");
                     break;
@@ -208,6 +194,7 @@ class Objectdetector : public ofThread
             if (m_processing) {
                 ofNotifyEvent(on_finish_detections, count, this);
                 m_processing = false;
+                m_lock = false;
             }
 
             ofSleepMillis(10);

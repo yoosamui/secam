@@ -51,6 +51,27 @@ namespace common
         return buf;
     }
 
+    string getTimestampMillis(const string& time_zone, const string& format_string)
+    {
+        // char buf[32];
+
+        //  sprintf(buf, "TZ=%s", time_zone.c_str());
+        setenv("TZ", time_zone.c_str(), 1);
+        // get a precise timestamp as a string
+        const auto now = std::chrono::system_clock::now();
+        const auto nowAsTimeT = std::chrono::system_clock::to_time_t(now);
+        const auto nowMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+
+        std::stringstream nowSs;
+        nowSs << std::put_time(std::localtime(&nowAsTimeT),
+                               format_string.c_str() /* "%a %b %d %Y %T"*/)
+              << '.' << std::setfill('0') << std::setw(3) << nowMs.count();
+
+        unsetenv("TZ");
+        return nowSs.str();
+    }
+
     /*
      *  ausume t hast yyyy.mm.dd hh:mm:ss format
      *  and the length must be 19 characters.
