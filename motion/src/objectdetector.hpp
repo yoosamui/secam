@@ -86,8 +86,8 @@ class Objectdetector : public ofThread
 
         m_frames.push_back(frame);
 
-        string filename = m_writer.get_filepath("probe", ".jpg", 1);
-        imwrite(filename, frame);
+        // string filename = m_writer.get_filepath("probe", ".jpg", 1);
+        // imwrite(filename, frame);
     }
 
     void detect()
