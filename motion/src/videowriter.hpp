@@ -90,24 +90,20 @@ class Videowriter : public ofThread, public VideoWriter
     string get_filepath(const string& prefix, const string& extension, int ret = 0)
     {
         const string timestamp = common::getTimestamp(m_config.settings.timezone, "%T");
-        m_source_dir = m_destination_dir =
-            m_config.settings.storage + common::getTimestamp(m_config.settings.timezone, "%F");
-
-        /*if (boost::filesystem::exists(string(TMPDIR))) {
-            m_source_dir = string(TMPDIR) + common::getTimestamp(m_config.settings.timezone, "%F");
-        }*/
+        const string timestampMillis = common::getTimestampMillis(m_config.settings.timezone, "%T");
 
         try {
+            m_source_dir =
+                m_config.settings.storage + common::getTimestamp(m_config.settings.timezone, "%F");
             boost::filesystem::create_directory(m_source_dir);
-            boost::filesystem::create_directory(m_destination_dir);
 
         } catch (boost::filesystem::filesystem_error& e) {
             common::log(e.what(), OF_LOG_ERROR);
         }
 
-        m_file = "/" + timestamp + "_" + prefix + extension;
+        m_file = "/" + timestampMillis + "_" + prefix + extension;
 
-        return ret == 0 ? m_source_dir + m_file : m_destination_dir + m_file;
+        return ret == 0 ? m_source_dir : m_source_dir + m_file;
     }
 
   private:
@@ -138,7 +134,7 @@ class Videowriter : public ofThread, public VideoWriter
 
                 // TODO factory
                 Config& m_config = m_config.getInstance();
-                string filename = get_filepath("motion_" + m_config.parameters.camname, ".mkv");
+                string filename = get_filepath("motion_" + m_config.parameters.camname, ".mkv", 1);
                 // result = filename;
 
                 common::log("Create video file = " + filename);
