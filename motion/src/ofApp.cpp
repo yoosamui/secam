@@ -89,7 +89,7 @@ void ofApp::update()
     common::bgr2rgb(m_frame);
 
     if (!m_frame.empty()) {
-        m_timestamp = common::getTimestamp(m_config.settings.timezone);
+        m_timestamp = common::getTimestampMillis(m_config.settings.timezone);
         this->drawTimestamp();
 
         m_lowframerate = static_cast<uint8_t>(ofGetFrameRate()) < m_config.parameters.fps - 4;
@@ -344,10 +344,9 @@ void ofApp::drawTimestamp()
     int x = m_frame.cols;
     int y = 0;
 
-    // cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 140, 14), CV_RGB(255, 255, 255),
-    // CV_FILLED);
+    cv::rectangle(m_frame, Point(x - 3, y + 2), Point(x - 210, 14), CV_RGB(0, 0, 0), CV_FILLED);
 
-    cv::putText(m_frame, m_timestamp, cv::Point(x - 180, y + 12), fontface, scale,
+    cv::putText(m_frame, m_timestamp, cv::Point(x - 200, y + 12), fontface, scale,
                 cv::Scalar(255, 255, 255), thickness, LINE_AA, false);
 }
 

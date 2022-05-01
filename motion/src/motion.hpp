@@ -52,7 +52,7 @@ class Motion : public IMotion
             m_polyline.lineTo(start_point.x, start_point.y + h);
             m_polyline.lineTo(start_point.x, start_point.y);
 
-            for (const auto v : m_polyline.getVertices()) {
+            for (const auto& v : m_polyline.getVertices()) {
                 m_maskPoints.push_back(Point(v.x, v.y));
             }
         }

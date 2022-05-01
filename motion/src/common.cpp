@@ -66,7 +66,7 @@ namespace common
         std::stringstream nowSs;
         nowSs << std::put_time(std::localtime(&nowAsTimeT),
                                format_string.c_str() /* "%a %b %d %Y %T"*/)
-              << '.' << std::setfill('0') << std::setw(3) << nowMs.count();
+              << ':' << std::setfill('0') << std::setw(2) << nowMs.count() / 10;
 
         unsetenv("TZ");
         return nowSs.str();
