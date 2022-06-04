@@ -22,7 +22,6 @@ class Camera : public cv::VideoCapture
     {
         cout << "open stream " << uri << endl;
         bool result = open(uri, CAP_FFMPEG);
-        ofSleepMillis(500);
         m_fps = get(CAP_PROP_FPS);
 
         return result;
